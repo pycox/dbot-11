@@ -40,7 +40,6 @@ def main():
                     )
                     break
 
-        flag = False
         try:
             driver.find_element(By.CSS_SELECTOR, 'button[aria-label="next"]').click()
             time.sleep(4)
