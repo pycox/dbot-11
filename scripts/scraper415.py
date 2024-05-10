@@ -34,7 +34,6 @@ def main():
     #             )
     #             break
 
-
     driver.quit()
     updateDB(key, data)
 
