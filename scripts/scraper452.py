@@ -16,11 +16,12 @@ def main():
     time.sleep(4)
 
     items = driver.find_elements(By.CSS_SELECTOR, ".css-1fquksq.e9up25i0")
-
+    url_ = url.split("#")[0]
     data = []
 
     for item in items:
-        link = url
+        job_id = item.find_element(By.CSS_SELECTOR, "button").get_attribute("id").strip()
+        link = f"{url_}#{job_id}"
         location = item.find_element(By.CSS_SELECTOR, '.css-11lck9.e9up25i5').text.strip()
         for str in ['LONDON', 'NEW YORK', 'SAN FRANCISCO', 'UNITED STATES', 'UNITED KINGDOM', 'UK', 'USA', 'US']:
             if (str in location):
