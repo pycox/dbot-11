@@ -1,6 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import Select
 from utils import readUrl, updateDB
 import time
 
@@ -15,25 +16,21 @@ def main():
 
     time.sleep(4)
 
-
-
     data = []
+    
+    items = driver.find_elements(By.CSS_SELECTOR, ".rt-tr-group")
+    for item in items:
+        data.append(
+            [
+                item.find_element(By.CSS_SELECTOR, "a.hide-sm-block.text-bold").text.strip(),
+                com,
+                "UK",
+                item.find_element(By.CSS_SELECTOR, "a.hide-sm-block.text-bold").get_attribute("href").strip(),
+            ]
+        )
 
-    # items = driver.find_elements(By.CSS_SELECTOR, "li.BambooHR-ATS-Jobs-Item")
-    # for item in items:
-    #     link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
 
-    #     data.append(
-    #         [
-    #             item.find_element(By.CSS_SELECTOR, "a").text.strip(),
-    #             com,
-    #             item.find_element(By.CSS_SELECTOR, "span").text.strip(),
-    #             link,
-    #         ]
-    #     )
-
-    # driver.quit()
-
+    driver.quit()
     updateDB(key, data)
 
 
