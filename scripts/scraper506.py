@@ -1,6 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import Select
 from utils import readUrl, updateDB
 import time
 
@@ -15,25 +16,32 @@ def main():
 
     time.sleep(4)
 
+    try:
+        driver.find_element(By.CSS_SELECTOR, "button[data-action='click->common--cookies--alert#disableAll']").click()
+    except:
+        print("No Cookie Button")
 
+    time.sleep(4)
 
     data = []
+    
+    items = driver.find_elements(By.CSS_SELECTOR, "#jobs_list_container li")
+    for item in items:
+        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+        location = item.find_element(By.CSS_SELECTOR, ".mt-1.text-md span:nth-child(1)").text.strip()
+        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US', 'Warner Street']:
+            if (str in location):
+                data.append(
+                    [
+                        item.find_element(By.CSS_SELECTOR, "a span").text.strip(),
+                        com,
+                        location,
+                        link,
+                    ]
+                )
+                break
 
-    # items = driver.find_elements(By.CSS_SELECTOR, "li.BambooHR-ATS-Jobs-Item")
-    # for item in items:
-    #     link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-
-    #     data.append(
-    #         [
-    #             item.find_element(By.CSS_SELECTOR, "a").text.strip(),
-    #             com,
-    #             item.find_element(By.CSS_SELECTOR, "span").text.strip(),
-    #             link,
-    #         ]
-    #     )
-
-    # driver.quit()
-
+    driver.quit()
     updateDB(key, data)
 
 
