@@ -26,7 +26,7 @@ def main():
             if (str in location):
                 data.append(
                     [
-                        item.find_element(By.CSS_SELECTOR, ".").text.strip(),
+                        item.find_element(By.CSS_SELECTOR, ".srJobListJobTitle").text.strip(),
                         com,
                         location,
                         link,
