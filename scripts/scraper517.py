@@ -31,7 +31,7 @@ def main():
         )
 
     driver.quit()
-    print(key, data)
+    updateDB(key, data)
 
 
 if __name__ == "__main__":
