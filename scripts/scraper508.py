@@ -18,21 +18,21 @@ def main():
 
     data = []
     
-    items = driver.find_elements(By.CSS_SELECTOR, ".jobs_linkContainer__6qrYl a")
+    items = driver.find_elements(By.CSS_SELECTOR, ".availablerole")
     for item in items:
-        link = item.get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, "small").text.strip()
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
-            if (str in location):
-                data.append(
-                    [
-                        item.find_element(By.CSS_SELECTOR, "p").text.strip(),
-                        com,
-                        location,
-                        link,
-                    ]
-                )
-                break
+        try:
+            title = driver.execute_script("return arguments[0].innerText;", item.find_element(By.CSS_SELECTOR, ".jobtitle"))
+        except:
+            continue
+        if title:
+            data.append(
+                [
+                    title.strip(),
+                    com,
+                    "UK",
+                    item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+                ]
+            )
 
 
     driver.quit()
