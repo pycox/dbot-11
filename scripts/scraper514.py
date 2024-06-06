@@ -11,10 +11,9 @@ def main():
     com, url = readUrl(key)
     options = Options()
     options.add_argument("--log-level=3")
+    options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
-
-    time.sleep(4)
 
     data = []
     
