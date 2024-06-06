@@ -16,30 +16,23 @@ def main():
 
     time.sleep(4)
 
-    try:
-        driver.find_element(By.CSS_SELECTOR, 'button[data-action="click->common--cookies--alert#disableAll"]').click()
-    except:
-        print("No Cookie Button")
-
-    time.sleep(4)
-
     data = []
 
-    # items = driver.find_elements(By.CSS_SELECTOR, "#jobs_list_container .block-grid-item")
-    # for item in items:
-    #     link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-    #     location = item.find_element(By.CSS_SELECTOR, ".mt-1.text-md span:nth-child(1)").text.strip()
-    #     for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
-    #         if (str in location):
-    #             data.append(
-    #                 [
-    #                     item.find_element(By.CSS_SELECTOR, ".text-block-base-link.company-link-style").text.strip(),
-    #                     com,
-    #                     location,
-    #                     link,
-    #                 ]
-    #             )
-    #             break
+    items = driver.find_elements(By.CSS_SELECTOR, "a.opportunity")
+    for item in items:
+        link = item.get_attribute("href").strip()
+        location = driver.execute_script("return arguments[0].innerText;", item.find_element(By.CSS_SELECTOR, ".opportunity-location"))
+        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US', 'Glasgow', 'Leeds']:
+            if (str in location):
+                data.append(
+                    [
+                        driver.execute_script("return arguments[0].innerText;", item.find_element(By.CSS_SELECTOR, ".opportunity-title")),
+                        com,
+                        location,
+                        link,
+                    ]
+                )
+                break
 
     driver.quit()
     updateDB(key, data)
