@@ -18,17 +18,16 @@ def main():
 
     data = []
     
-    # items = driver.find_elements(By.CSS_SELECTOR, "#searchResultsJS tr td a")
-    # for item in items:
-    #     link = item.get_attribute("href").strip()
-    #     data.append(
-    #         [
-    #             item.text.strip(),
-    #             com,
-    #             "UK",
-    #             link,
-    #         ]
-    #     )
+    items = driver.find_elements(By.CSS_SELECTOR, ".positions li.position")
+    for item in items:
+        data.append(
+            [
+                item.find_element(By.CSS_SELECTOR, "h2").text.strip(),
+                com,
+                "UK",
+                item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip(),
+            ]
+        )
 
 
     driver.quit()
