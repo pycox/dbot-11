@@ -41,15 +41,19 @@ def filterUrls():
     ws = wb.active
 
     urls = []
+    
+    if ws["D1"].value != "yes":
+        return urls
+    
+    current = 1
+    for row in ws.iter_rows(min_row=current + 1, max_row=current+1):
+    # for row in ws.iter_rows(min_row=1):
 
-    for row in ws.iter_rows(min_row=1):
-        if row[0].value != "ID" and row[0].value is not None:
-            if ws["D1"].value == "yes":
-                if row[3].value == "yes":
-                    urls.append(row[0].value)
-            else:
-                if row[3].value != "no":
-                    urls.append(row[0].value)
+        if row[0].value == "ID" or row[0].value is None:
+            continue
+
+        if row[3].value == "yes":
+            urls.append((row[0].value, row[1].value, row[2].value, row[5].value))
 
     return list(set(urls))
 

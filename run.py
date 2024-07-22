@@ -7,24 +7,23 @@ num_threads = getBotSpeed()
 scraper_modules = [f"scripts.scraper{id}" for id in filterUrls()]
 
 
-def scraping(scraper, name):
+def scraping(id, name, url, location):
+    
     try:
-        scraper()
+        scrapper = importlib.import_module(f"scripts.scraper{id}")
+        scrapper.main(id, name, url, location)
     except Exception as e:
         print(f"{name}: {e}")
 
 
 def run():
-    scrapers = [
-        (importlib.import_module(module).main, module.split(".")[-1])
-        for module in scraper_modules
-    ]
-
-    for i in range(0, len(scrapers), num_threads):
+    scrapers = filterUrls()
+    total_scrapers = len(scrapers)
+    for i in range(0, total_scrapers, num_threads):
         threads = []
 
-        for scraper, name in scrapers[i : i + num_threads]:
-            thread = Thread(target=scraping, args=(scraper, name))
+        for attrs in scrapers[i : i + num_threads]:
+            thread = Thread(target=scraping, args=(attrs))
             threads.append(thread)
             thread.start()
 
