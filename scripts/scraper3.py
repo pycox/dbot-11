@@ -5,9 +5,7 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 3
-    com, url = readUrl(key)
+def main(key, com, url, location):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -15,6 +13,13 @@ def main():
     
     flag = True
     data = []
+    
+    if location == "UK":
+        locations = ["UK", "United Kingdom", "London"]
+    elif location == "US":
+        locations = ["US", "USA", "New York", "San Francisco", "United States"]
+    else:
+        locations = ["London", "New York", "San Francisco", "United States", "United Kingdom", "UK", "USA", "US"]
     
     while flag:
         try:
@@ -24,14 +29,18 @@ def main():
             
             for item in items:
                 link = item.find_element(By.CSS_SELECTOR, "a").get_attribute('href')
-                                
-                data.append([
-                    item.find_element(By.CSS_SELECTOR, "div.article__header__title").text.strip(),
-                    com,
-                    item.find_element(By.CSS_SELECTOR, 'span.item--location').text.strip(),
-                    link
-                ])
-            
+                location  = item.find_element(By.CSS_SELECTOR, 'span.item--location').text.strip()
+                
+                for str in locations:
+                    if str in location:
+                        data.append([
+                            item.find_element(By.CSS_SELECTOR, "div.article__header__title").text.strip(),
+                            com,
+                            location,
+                            link
+                        ])
+                        break
+                
             nextBtn = driver.find_elements(By.CSS_SELECTOR, 'a.paginationNextLink')
 
             if len(nextBtn) > 0:
