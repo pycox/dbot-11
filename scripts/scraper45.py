@@ -5,9 +5,7 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 45
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -28,13 +26,7 @@ def main():
                     By.CSS_SELECTOR, "span.vacancyColumn"
                 ).text.strip()
 
-                for str in [
-                    "London",
-                    "New York",
-                    "San Francisco",
-                    "United States",
-                    "United Kingdom",
-                ]:
+                for str in locations:
                     if str in location:
 
                         data.append(
