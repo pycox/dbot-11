@@ -3,9 +3,7 @@ from bs4 import BeautifulSoup
 from utils import readUrl, updateDB
 
 
-def main():
-    key = 12
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     
     response = requests.get(url)
     
@@ -14,13 +12,13 @@ def main():
     items = soup.select('a.Card__StyledCard-sc-y213rf-1')
     
     data = []
-    
-    for item in items:
-        link = item.get('href').strip()
-        title = item.select_one("h3").text.strip() if item.select_one("h3") else ""
-        location = "London" 
-        
-        data.append([title, com, location, f'https://www.kfh.co.uk{link}'])
+    if locations[0] == "UK":
+        for item in items:
+            link = item.get('href').strip()
+            title = item.select_one("h3").text.strip() if item.select_one("h3") else ""
+            location = "London" 
+            
+            data.append([title, com, location, f'https://www.kfh.co.uk{link}'])
                 
     updateDB(key, data)
 
