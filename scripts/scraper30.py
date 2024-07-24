@@ -10,7 +10,6 @@ def main(key, com, url, locations):
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
-    driver.get("https://careers.next15.com/jobs")
 
     time.sleep(4)
 
