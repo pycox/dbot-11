@@ -5,9 +5,7 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 44
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -43,15 +41,17 @@ def main():
         location = item.find_element(
             By.XPATH, "//span[contains(text(), 'Location')]/following-sibling::div"
         ).text.strip()
-
-        data.append(
-            [
-                title,
-                com,
-                location,
-                link,
-            ]
-        )
+        for str in locations:
+            if str in location:
+                data.append(
+                    [
+                        title,
+                        com,
+                        location,
+                        link,
+                    ]
+                )
+                break
 
     updateDB(key, data)
 
