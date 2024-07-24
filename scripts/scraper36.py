@@ -5,9 +5,7 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 36
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -23,28 +21,30 @@ def main():
     except Exception as e:
         print(f"Scraper{key} cookie Button: {e}")
 
-    time.sleep(4)
+    flag = True
+    while flag:
+        time.sleep(4)
+        try:
+            driver.find_element(By.CSS_SELECTOR, "#show_more_button").click()
+        except Exception:
+            flag = False
 
     items = driver.find_elements(By.CSS_SELECTOR, "li.z-career-job-card-image")
 
     data = []
 
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        title = item.find_element(By.CSS_SELECTOR, "span").text.strip()
-        lDom = item.find_elements(By.CSS_SELECTOR, "div.text-md > span")[2]
-        location = lDom.get_attribute("title").strip()
-        if location == "":
-            location = lDom.text.strip()
-
-        data.append(
-            [
-                title,
-                com,
-                location,
-                link,
-            ]
-        )
+    if "UK" in locations:
+        for item in items:
+            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+            title = item.find_element(By.CSS_SELECTOR, "span").text.strip()
+            data.append(
+                [
+                    title,
+                    com,
+                    "UK",
+                    link,
+                ]
+            )
 
     driver.quit()
 
