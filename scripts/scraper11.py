@@ -5,9 +5,7 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 11
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -16,9 +14,14 @@ def main():
     time.sleep(4)
     driver.find_element(By.CSS_SELECTOR, "button[data-automation-id='Location_Country']").click()
     time.sleep(2)
-    driver.find_element(By.XPATH, "//label[contains(text(), 'United Kingdom')]").click()
-    time.sleep(4)
-    driver.find_element(By.XPATH, "//label[contains(text(), 'United States')]").click()
+    if all(loc in locations for loc in ["UK", "US"]):
+        driver.find_element(By.XPATH, "//label[contains(text(), 'United Kingdom')]").click()
+        time.sleep(4)
+        driver.find_element(By.XPATH, "//label[contains(text(), 'United States')]").click()
+    elif "UK" in locations:
+        driver.find_element(By.XPATH, "//label[contains(text(), 'United Kingdom')]").click()
+    else:
+        driver.find_element(By.XPATH, "//label[contains(text(), 'United States')]").click()
     time.sleep(4)
     driver.find_element(By.CSS_SELECTOR, "button[data-automation-id='viewAllJobsButton']").click()
     time.sleep(4)
