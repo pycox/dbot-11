@@ -5,9 +5,7 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 22
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -23,13 +21,15 @@ def main():
         link = item.find_element(By.CSS_SELECTOR, 'a').get_attribute("href").strip()
         location = item.find_element(By.CSS_SELECTOR, 'div.attrax-vacancy-tile__option-location-valueset').text.strip()
         
-        if location in ['London', 'New York']:
-            data.append([
-                item.find_element(By.CSS_SELECTOR, 'a').text.strip(),
-                com,
-                "United Kindom",
-                f'https://www.admiraljobs.co.uk{link}'
-            ])
+        for str in locations:
+            if str in location:
+                data.append([
+                    item.find_element(By.CSS_SELECTOR, 'a').text.strip(),
+                    com,
+                    "United Kindom",
+                    f'https://www.admiraljobs.co.uk{link}'
+                ])
+                break
                 
     updateDB(key, data)
 
