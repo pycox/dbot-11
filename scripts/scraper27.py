@@ -5,9 +5,7 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 27
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -16,7 +14,7 @@ def main():
     time.sleep(8)
     
     try:
-        driver.find_element(By.CSS_SELECTOR, 'div#interactive-close-button').click()
+        driver.find_element(By.CSS_SELECTOR, '#hs-eu-confirmation-button').click()
     except Exception as e:
         print(f'Scraper{key} cookiee button: {e}')
         
@@ -26,13 +24,14 @@ def main():
     
     data = []
     
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, 'a').get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, 'div.resumator-job-info').text.strip()
-        title = item.find_element(By.CSS_SELECTOR, 'div.resumator-job-title').text.strip()
-        
-        data.append([title, com, location, link])
-        
+    if "US" in locations:
+        for item in items:
+            link = item.find_element(By.CSS_SELECTOR, 'a').get_attribute("href").strip()
+            # location = item.find_element(By.CSS_SELECTOR, 'div.resumator-job-info').text.strip()
+            title = item.find_element(By.CSS_SELECTOR, 'div.resumator-job-title').text.strip()
+            
+            data.append([title, com, "US", link])
+
     updateDB(key, data)
 
 
