@@ -35,6 +35,32 @@ def getBotSpeed():
         return 4
 
 
+def getLocations(location):
+    location_data = {
+        "UK": (
+            "UK", "UNITED KINGDOM", "ENG", "GB", "United Kingdom", "London", "LONDON", 
+            "Bristol", "BRISTOL", "Tamworth", "TAMWORTH", "Brighton", "BRIGHTON",
+            "England", "ENGLAND", "Birmingham", "BIRMINGHAM",
+            "Cambridge", "CAMBRIDGE", "Manchester", "MANCHESTER",
+            "Scotland", "SCOTLAND"
+        ),
+        "US": (
+            "US", "USA", "UNITED STATES", "United States", "New York", 
+            "NEW YORK", "Boston", "BOSTON", "San Francisco", 
+            "SAN FRANCISCO", "Washington", "WASHINGTON", 
+            "Philadelphia", "PHILADELPHIA", "Stamford", "STAMFORD", 
+            "Houston", "HOUSTON", "Los Angeles", "LOS ANGELES", 
+            "Chicago", "CHICAGO", "San Diego", "SAN DIEGO", 
+            "Denver", "DENVER", "Salt Lake City", "SALT LAKE CITY", 
+            "Miami", "MIAMI", "Tampa", "TAMPA", "Orlando", "ORLANDO"
+        )
+    }
+
+    if location:
+        location = location.strip()
+    return location_data.get(location, location_data["UK"] + location_data["US"])
+    
+
 def filterUrls():
     wb = load_workbook(ctrXlDir)
 
@@ -45,7 +71,7 @@ def filterUrls():
     if ws["D1"].value != "yes":
         return urls
     
-    current = 1
+    current = 50
     for row in ws.iter_rows(min_row=current + 1, max_row=current+1):
     # for row in ws.iter_rows(min_row=1):
 
@@ -53,7 +79,8 @@ def filterUrls():
             continue
 
         if row[3].value == "yes":
-            urls.append((row[0].value, row[1].value, row[2].value, row[5].value))
+            locations = getLocations(row[5].value)
+            urls.append((row[0].value, row[1].value, row[2].value, locations))
 
     return list(set(urls))
 
@@ -108,6 +135,9 @@ def updateHistory(key, val):
 
 
 def updateDB(key=None, arr=[]):
+    if key:
+        print(key, arr)
+    return
     global cashData
 
     if key is None:
