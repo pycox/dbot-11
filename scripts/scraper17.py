@@ -5,9 +5,7 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 17
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -19,18 +17,18 @@ def main():
     
     data = []
     
-    for item in items:
-        link = item.get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, "li.location").text.strip()
-            
-        if location.split(',')[-1].strip() in ["GB", "USA"]:
+    if locations[0] == "UK":
+        for item in items:
+            link = item.get_attribute("href").strip()
+            location = item.find_element(By.CSS_SELECTOR, "li.location").text.strip()
+                
             data.append([
                 item.find_element(By.CSS_SELECTOR, "h2").text.strip(),
                 com,
                 location,
                 link
             ])
-                
+                    
     updateDB(key, data)
 
 
