@@ -5,15 +5,13 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 13
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
     
-    time.sleep(10)
+    time.sleep(5)
     
     try:
         driver.find_element(By.CSS_SELECTOR, "button#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll").click()
@@ -23,33 +21,30 @@ def main():
     flag = True
     data = []
     
+    
+    flag = True
     while flag:
+        time.sleep(4)
         try:
-            time.sleep(8)
+            driver.find_element(By.CSS_SELECTOR, "div.RecentJobPosts_loadMore__ieWQ5 > button").click()
+        except Exception:
+            flag = False
+    
+        items = driver.find_elements(By.CSS_SELECTOR, ".RecentJobPosts_jobs__Y9kYZ a")
+        for item in items:
             
-            items = driver.find_elements(By.CSS_SELECTOR, "div.job-listing__job")
-            
-            for item in items:
-                link = item.find_element(By.CSS_SELECTOR, "a").get_attribute('href')
-                location = item.find_element(By.CSS_SELECTOR, 'p.city').text.strip()
-                        
-                if location in ["London"]:        
+            link = item.get_attribute('href')
+            location = item.find_elements(By.CSS_SELECTOR, '.RecentJobPosts_tags__z5SPl p')[-1].text.strip()
+            for str in locations:
+                if str in location:
                     data.append([
-                        item.find_element(By.CSS_SELECTOR, "h3").text.strip(),
+                        item.find_element(By.CSS_SELECTOR, "p.heading-4").text.strip(),
                         com,
                         location,
                         link
                     ])
-            
-            nextBtn = driver.find_elements(By.CSS_SELECTOR, 'li.paginationjs-next')
-
-            if len(nextBtn) > 0:
-                nextBtn[0].click()
-            else:
-                flag = False
-        except:
-            flag = False
-            
+                    break
+        
     updateDB(key, data)
     
     
