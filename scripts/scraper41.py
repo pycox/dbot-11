@@ -5,15 +5,13 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 41
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    time.sleep(8)
+    time.sleep(4)
 
     try:
         driver.find_element(By.CSS_SELECTOR, "div.dialog-message").find_element(
@@ -22,7 +20,7 @@ def main():
     except Exception as e:
         print(f"Scraper{key} cookiee button: {e}")
 
-    time.sleep(10)
+    time.sleep(4)
 
     iframe = driver.find_element(By.TAG_NAME, "iframe")
     driver.switch_to.frame(iframe)
@@ -34,15 +32,18 @@ def main():
 
     for item in items:
         link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-
-        data.append(
-            [
-                item.find_element(By.CSS_SELECTOR, "a").text.strip(),
-                com,
-                item.find_element(By.CSS_SELECTOR, "span.location").text.strip(),
-                link,
-            ]
-        )
+        location = item.find_element(By.CSS_SELECTOR, "span.location").text.strip()
+        for str in locations:
+            if str in location:
+                data.append(
+                    [
+                        item.find_element(By.CSS_SELECTOR, "a").text.strip(),
+                        com,
+                        location,
+                        link,
+                    ]
+                )
+                break
 
     updateDB(key, data)
 
