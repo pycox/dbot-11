@@ -5,34 +5,28 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 42
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    time.sleep(4)
+    time.sleep(2)
 
     try:
         driver.find_element(
-            By.CSS_SELECTOR, "a#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll"
+            By.CSS_SELECTOR, "#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll"
         ).click()
     except Exception as e:
         print(f"Scraper{key} cookiee button: {e}")
 
-    time.sleep(4)
+    time.sleep(8)
     
     data = []
 
-    locations = driver.find_elements(By.CSS_SELECTOR, "h2.whr-group")
-    doms = driver.find_elements(By.CSS_SELECTOR, "ul.whr-items")
-
-    for i in range(0, len(locations)):
-        location = locations[i].text.strip()
-        items = doms[i].find_elements(By.CSS_SELECTOR, "li.whr-item")
-        
+    if "UK" in locations:
+        items = driver.find_elements(By.CSS_SELECTOR, "li.whr-item")
+            
         for item in items:
             link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
             title = item.find_element(By.CSS_SELECTOR, "h3.whr-title").text.strip()
@@ -41,7 +35,7 @@ def main():
                 [
                     title,
                     com,
-                    location,
+                    "UK",
                     link,
                 ]
             )
