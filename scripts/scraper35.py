@@ -5,9 +5,7 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 35
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -34,15 +32,17 @@ def main():
         location = item.find_element(
             By.CSS_SELECTOR, "span.city_vacancyColumn"
         ).text.strip()
-
-        data.append(
-            [
-                title,
-                com,
-                location,
-                link,
-            ]
-        )
+        for str in locations:
+            if str in location:
+                data.append(
+                    [
+                        title,
+                        com,
+                        location,
+                        link,
+                    ]
+                )
+                break
 
     driver.quit()
 
