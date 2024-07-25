@@ -5,53 +5,39 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 53
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    # time.sleep(4)
+    time.sleep(2)
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    time.sleep(3)
 
-    # try:
-    #     driver.find_element(By.CSS_SELECTOR, 'button#cookie-accept').click()
-    # except Exception as e:
-    #     print(f'Scraper{key} cookiee button: {e}')
+    items = driver.find_elements(By.CSS_SELECTOR, ".Bloom__Tabs__tabsContent___T5H80 .Bloom__modifiers__cf___2jEl0")
+    data = []
 
-    # time.sleep(4)
+    for item in items:
+        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+        title = item.find_element(By.CSS_SELECTOR, "h3").text.strip()
+        location = item.find_element(By.CSS_SELECTOR, "a p").text.strip()
 
-    # items = driver.find_elements(By.CSS_SELECTOR, "ul > div")
-
-    # data = []
-
-    # for item in items:
-    #     link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-    #     title = item.find_element(By.CSS_SELECTOR, "a").text.strip()
-    #     location = item.find_elements(By.CSS_SELECTOR, "p")[1].text.strip()
-
-    #     for str in [
-    #         "London",
-    #         "New York",
-    #         "San Francisco",
-    #         "United States",
-    #         "United Kingdom",
-    #     ]:
-    #         if str in location:
-    #             data.append(
-    #                 [
-    #                     title,
-    #                     com,
-    #                     location,
-    #                     link,
-    #                 ]
-    #             )
-    #             break
+        for str in locations:
+            if str in location:
+                data.append(
+                    [
+                        title,
+                        com,
+                        location,
+                        link,
+                    ]
+                )
+                break
 
     driver.quit()
 
-    # updateDB(key, data)
+    updateDB(key, data)
 
 
 if __name__ == "__main__":
