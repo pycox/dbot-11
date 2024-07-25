@@ -6,25 +6,13 @@ import time
 import math
 
 
-def main():
-    key = 78
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
     time.sleep(4)
-
-    try:
-        driver.find_element(
-            By.CSS_SELECTOR,
-            "button#cookie-acknowledge",
-        ).click()
-    except Exception as e:
-        print(f"Scraper{key} cookiee button: {e}")
-
-    time.sleep(2)
 
     total = int(
         driver.find_element(
@@ -47,21 +35,19 @@ def main():
         for item in items:
             link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
             location = item.find_element(By.CSS_SELECTOR, "td.colLocation").text.strip()
-
-            if location.split(" ")[-1].strip() in ["GB", "US"] or location.split(" ")[
-                0
-            ].strip() in ["GB", "US"]:
-                data.append(
-                    [
-                        item.find_element(By.CSS_SELECTOR, "td.colTitle").text.strip(),
-                        com,
-                        location,
-                        link,
-                    ]
-                )
+            for str in locations:
+                if (str in location):
+                    data.append(
+                        [
+                            item.find_element(By.CSS_SELECTOR, "td.colTitle").text.strip(),
+                            com,
+                            str,
+                            link,
+                        ]
+                    )
+                    break
 
     driver.quit()
-
     updateDB(key, data)
 
 
