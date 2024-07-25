@@ -1,31 +1,35 @@
-import requests
-from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 from utils import readUrl, updateDB
+import time
 
 
-def main():
-    key = 99
-    com, url = readUrl(key)
-    response = requests.get(url)
-    html_content = response.text
+def main(key, com, url, locations):
+    options = Options()
+    options.add_argument("--log-level=3")
+    driver = webdriver.Chrome(options=options)
+    driver.get(url)
 
-    soup = BeautifulSoup(html_content, "html.parser")
-
+    time.sleep(4)
+    
     data = []
 
-    items = soup.select("div.opening")
+    items = driver.find_elements(By.CSS_SELECTOR, "tr.job-post")
 
     for item in items:
-        link = item.select_one("a")["href"].strip()
+        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
 
         data.append(
             [
-                item.select_one("a").text.strip(),
+                item.find_element(By.CSS_SELECTOR, "p.body.body--medium").text.strip(),
                 com,
-                item.select_one("span.location").text.strip(),
-                f"url{link}",
+                item.find_element(By.CSS_SELECTOR, "p.body.body__secondary.body--metadata").text.strip(),
+                link,
             ]
         )
+
+    driver.quit()
 
     updateDB(key, data)
 
