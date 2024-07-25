@@ -5,9 +5,7 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 82
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -18,30 +16,33 @@ def main():
     try:
         driver.find_element(
             By.CSS_SELECTOR,
-            "button#hs-eu-confirmation-button",
+            "#hs-eu-confirmation-button",
         ).click()
     except Exception as e:
         print(f"Scraper{key} cookie Button: {e}")
 
     time.sleep(4)
 
-    # dom = driver.find_element(By.CSS_SELECTOR, "ul#jobs_list_container")
-
-    # items = dom.find_elements(By.CSS_SELECTOR, "li")
-
     data = []
 
-    # for item in items:
-    #     link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+    items = driver.find_elements(By.CSS_SELECTOR, ".detail-content > h3")
+    for item in items:
+        title = item.text.strip()
 
-    #     data.append(
-    #         [
-    #             item.find_element(By.CSS_SELECTOR, "span").text.strip(),
-    #             com,
-    #             "London",
-    #             link,
-    #         ]
-    #     )
+        # Extract the link from the anchor tag within the h3 element, if it exists
+        link = item.find_element(By.XPATH, ".//a").get_attribute("href").strip()
+
+        # Find the following sibling p element for location
+        location_element = item.find_element(By.XPATH, "following-sibling::p")
+        location = location_element.text.strip()
+        data.append(
+            [
+                title,
+                com,
+                location,
+                link,
+            ]
+        )
 
     driver.quit()
 
