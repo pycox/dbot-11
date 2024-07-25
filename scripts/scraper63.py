@@ -5,15 +5,13 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 63
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    time.sleep(8)
+    time.sleep(4)
 
     try:
         driver.find_element(
@@ -30,22 +28,20 @@ def main():
     data = []
 
     for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(
-            By.CSS_SELECTOR, "div.job-tile__subheader > span"
-        ).text.strip()
-
-        data.append(
-            [
-                item.find_element(
-                    By.CSS_SELECTOR, "div.job-tile__header > span"
-                ).text.strip(),
-                com,
-                location,
-                link,
-            ]
-        )
-
+        location = item.find_element(By.CSS_SELECTOR, "li:nth-child(1) > div.job-list-item__job-info-value-container > div.job-list-item__job-info-value").text.strip()
+        for str in locations:
+            if (str in location):
+                link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+                title = item.find_element(By.CSS_SELECTOR, "span.job-tile__title").text.strip()
+                data.append(
+                    [
+                        title,
+                        com,
+                        location,
+                        link,
+                    ]
+                )
+                break
     driver.quit()
 
     updateDB(key, data)
