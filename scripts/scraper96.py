@@ -5,16 +5,11 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 96
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
-    driver.execute_script("window.scrollTo(0, 1000)")
-    driver.find_element(By.CSS_SELECTOR, "div").click()
-    time.sleep(4)
 
     time.sleep(8)
 
@@ -24,15 +19,18 @@ def main():
 
     for item in items:
         link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-
-        data.append(
-            [
-                item.find_element(By.CSS_SELECTOR, "a").text.strip(),
-                com,
-                item.find_elements(By.CSS_SELECTOR, "span")[1].text.strip(),
-                link,
-            ]
-        )
+        location = item.find_elements(By.CSS_SELECTOR, "span")[1].text.strip()
+        for str in locations:
+            if (str in location):
+                data.append(
+                    [
+                        item.find_element(By.CSS_SELECTOR, "a").text.strip(),
+                        com,
+                        location,
+                        link,
+                    ]
+                )
+                break
 
     driver.quit()
 
