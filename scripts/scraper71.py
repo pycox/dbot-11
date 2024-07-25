@@ -3,9 +3,7 @@ from bs4 import BeautifulSoup
 from utils import readUrl, updateDB
 
 
-def main():
-    key = 71
-    com, url = readUrl(key)
+def main(key, com, url, locations):
 
     response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
@@ -29,7 +27,10 @@ def main():
         if title_tag:
             title = title_tag.text.strip()
 
-        data.append([title, com, location, link])
+        for str in locations:
+            if (str in location):
+                data.append([title, com, location, link])
+                break
 
     updateDB(key, data)
 
