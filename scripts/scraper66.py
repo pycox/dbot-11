@@ -5,9 +5,7 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 66
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -19,33 +17,37 @@ def main():
     except Exception as e:
         print(f"Scraper{key}: {e}")
     time.sleep(4)
-    try:
-        driver.find_element(
-            By.XPATH, "//span[contains(text(), 'United States')]"
-        ).click()
-    except Exception as e:
-        print(f"Scraper{key}: {e}")
-    time.sleep(4)
-    try:
-        driver.find_element(
-            By.XPATH, "//span[contains(text(), 'United Kingdom')]"
-        ).click()
-    except Exception as e:
-        print(f"Scraper{key}: {e}")
-    time.sleep(8)
+    
+    locations = []
+    if "US" in locations:
+        try:
+            driver.find_element(
+                By.XPATH, "//span[contains(text(), 'United States')]"
+            ).click()
+        except Exception as e:
+            print(f"Scraper{key}: {e}")
+        time.sleep(4)
+    
+    if "UK" in locations:
+        try:
+            driver.find_element(
+                By.XPATH, "//span[contains(text(), 'United Kingdom')]"
+            ).click()
+        except Exception as e:
+            print(f"Scraper{key}: {e}")
+        time.sleep(8)
 
     data = []
 
-    items = driver.find_elements(By.CSS_SELECTOR, "tbody > tr")
-
+    items = driver.find_elements(By.CSS_SELECTOR, "tbody.jobsbody tr")
     for item in items:
         link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
-
+        location = item.find_elements(By.CSS_SELECTOR, "td")[1].text.strip()
         data.append(
             [
                 item.find_element(By.CSS_SELECTOR, "th").text.strip(),
                 com,
-                item.find_elements(By.CSS_SELECTOR, "td")[1].text.strip(),
+                location,
                 link,
             ]
         )
