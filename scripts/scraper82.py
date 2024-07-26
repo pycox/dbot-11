@@ -13,30 +13,24 @@ def main(key, com, url, locations):
 
     time.sleep(4)
 
-    try:
-        driver.find_element(By.XPATH, "//a[contains(text(), 'Accept & Close')]").click()
-    except Exception as e:
-        print(f"Scraper{key} cookie Button: {e}")
-
-    time.sleep(4)
-
-    # dom = driver.find_element(By.CSS_SELECTOR, "ul#jobs_list_container")
-
-    # items = dom.find_elements(By.CSS_SELECTOR, "li")
-
     data = []
 
-    # for item in items:
-    #     link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+    items = driver.find_elements(By.CSS_SELECTOR, ".opportunities-item")
 
-    #     data.append(
-    #         [
-    #             item.find_element(By.CSS_SELECTOR, "span").text.strip(),
-    #             com,
-    #             "London",
-    #             link,
-    #         ]
-    #     )
+    for item in items:
+        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
+        location = item.find_element(By.CSS_SELECTOR, "span").text.strip()
+        for str in locations:
+            if (str in location):
+                data.append(
+                    [
+                        item.find_element(By.CSS_SELECTOR, "strong").text.strip(),
+                        com,
+                        location,
+                        link,
+                    ]
+                )
+                break
 
     driver.quit()
 
