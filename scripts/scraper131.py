@@ -5,61 +5,28 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 131
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    flag = True
+    time.sleep(4)
+
+
     data = []
 
-    while flag:
-        try:
-            time.sleep(4)
-
-            items = driver.find_elements(By.CSS_SELECTOR, "div.rowContainerHolder")
-
-            for item in items:
-                link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
-                location = item.find_element(
-                    By.CSS_SELECTOR, "span.vacancyColumn"
-                ).text.strip()
-
-                for str in [
-                    "London",
-                    "New York",
-                    "San Francisco",
-                    "United States",
-                    "United Kingdom",
-                ]:
-                    if str in location:
-
-                        data.append(
-                            [
-                                item.find_element(
-                                    By.CSS_SELECTOR, "div.rowHeader"
-                                ).text.strip(),
-                                com,
-                                location,
-                                link,
-                            ]
-                        )
-
-                        break
-
-            nextBtn = driver.find_element(By.CSS_SELECTOR, "a.scroller_movenext")
-
-            if nextBtn.get_attribute("disabled") == "true":
-
-                flag = False
-                break
-            else:
-                nextBtn.click()
-        except:
-            flag = False
+    items = driver.find_elements(By.CSS_SELECTOR, "#openings li  h2 a")
+    for item in items:
+        data.append(
+            [
+                item.text.strip(),
+                com,
+                "UK",
+                item.get_attribute("href"),
+            ]
+        )
 
     driver.quit()
 
