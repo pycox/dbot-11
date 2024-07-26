@@ -5,68 +5,69 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 113
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    time.sleep(4)
+    time.sleep(2)
 
-    try:
-        driver.find_element(By.CSS_SELECTOR, "button#truste-consent-button").click()
-    except Exception as e:
-        print(f"Scraper{key} cookiee button: {e}")
-
-    time.sleep(4)
-    
-    # driver.find_element(
-    #     By.XPATH, "//button[contains(text(), 'Country/Region')]"
-    # ).click()
-    # driver.find_element(By.XPATH, "//span[contains(text(), 'United States')]").click()
-    # driver.find_element(By.XPATH, "//span[contains(text(), 'United Kingdom')]").click()
-    
-    # time.sleep(40)
-
-    # flag = True
     data = []
+    regions = []
 
-    # while flag:
-    #     try:
-    #         time.sleep(4)
+    if "UK" in locations:
+        regions.append("United Kingdom")
+    if "US" in locations:
+        regions.append("United States")
+    
+    button = driver.find_element(By.CSS_SELECTOR, "#search-filter-clear")
+    driver.execute_script("arguments[0].scrollIntoView();", button)
+    driver.execute_script("arguments[0].click();", button)
+    time.sleep(3)
+    
+    button = driver.find_element(By.CSS_SELECTOR, "#country-toggle")
+    driver.execute_script("arguments[0].scrollIntoView();", button)
+    driver.execute_script("arguments[0].click();", button)
+    time.sleep(3)
 
-    #         # items = driver.find_elements(
-    #         #     By.CSS_SELECTOR, "a.JobListings_listing__qqquK"
-    #         # )
+    for region in regions:
+        button = driver.find_element(By.CSS_SELECTOR, f'input[data-display="{region}"]')
+        driver.execute_script("arguments[0].scrollIntoView();", button)
+        driver.execute_script("arguments[0].click();", button)
+        time.sleep(4)
 
-    #         # for item in items:
-    #         #     link = item.get_attribute("href").strip()
-    #         #     location = item.find_element(
-    #         #         By.CSS_SELECTOR, 'h4[data-testid="JobListings-location"]'
-    #         #     ).text.strip()
+    flag = True
+    
+    if regions:
+        while flag:
+            items = driver.find_elements(By.CSS_SELECTOR, "#search-results-list li a")
+            for item in items:
+                link = item.get_attribute("href").strip()
+                title = driver.execute_script("return arguments[0].innerText;", item.find_element(By.CSS_SELECTOR, "h3"))
+                
+                data.append(
+                    [
+                        title.strip(),
+                        com,
+                        driver.execute_script("return arguments[0].innerText;", item.find_element(By.CSS_SELECTOR, "span.job-location")),
+                        link,
+                    ]
+                )
 
-    #         #     if location in ["United Kingdom", "United States"]:
-    #         #         data.append(
-    #         #             [
-    #         #                 item.find_element(
-    #         #                     By.CSS_SELECTOR, 'h3[data-testid="JobListings-title"]'
-    #         #                 ).text.strip(),
-    #         #                 com,
-    #         #                 location,
-    #         #                 link,
-    #         #             ]
-    #         #         )
-
-    #         nextBtn = driver.find_element(By.CSS_SELECTOR, "a.next")
-
-    #         if nextBtn.is_enabled():
-    #             nextBtn.click()
-    #         else:
-    #             flag = False
-    #     except:
-    #         flag = False
+            try:
+                next_button = driver.find_element(By.CSS_SELECTOR, 'a.next')
+                if "disable" in next_button.get_attribute("class"):
+                    flag = False
+                else:
+                    driver.execute_script("arguments[0].click();", next_button)
+                    
+                time.sleep(4)
+            except Exception as e:
+                flag = False
+                print("No More Jobs", e)
+    
+    driver.quit()
 
     updateDB(key, data)
 
