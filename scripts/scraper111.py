@@ -1,47 +1,54 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import Select
 from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 111
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
+    time.sleep(2)
+
+    try:
+        driver.find_element(By.CSS_SELECTOR, 'button#onetrust-accept-btn-handler').click()
+    except:
+        print("No Cookie Button")
+
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
     time.sleep(4)
 
-    # try:
-    #     driver.find_element(By.CSS_SELECTOR, "button.js-accept").click()
-    # except Exception as e:
-    #     print(f"Scraper{key} cookiee button: {e}")
-
-    # time.sleep(4)
-
-    # items = driver.find_elements(By.CSS_SELECTOR, "div.job-row")
-
     data = []
+    
+    if "UK" in locations:
+        
+        flag = True
+        while flag:
+            time.sleep(4)
+            try:
+                driver.find_element(By.CSS_SELECTOR, "#js-careers-all > div > div > div > section > div.flex.flex-col.gap-8 > div > div > div > div > div.flex.justify-center.mt-10.sm\:flex-row.lg\:shrink-0.lg\:gap-4 > button").click()
+            except Exception:
+                flag = False
+        
+        items = driver.find_elements(By.CSS_SELECTOR, "article.js--careers-card")
+        for item in items:
+            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+            data.append(
+                [
+                    item.find_element(By.CSS_SELECTOR, "h2").text.strip(),
+                    com,
+                    "UK",
+                    link,
+                ]
+            )
 
-    # for item in items:
-    #     link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-    #     location = item.find_element(By.CSS_SELECTOR, "div.job-location").text.strip()
 
-    #     if location.split(",")[-1].strip() in ["United Kingdom", "United States"]:
-    #         data.append(
-    #             [
-    #                 item.find_element(By.CSS_SELECTOR, "a").text.strip(),
-    #                 com,
-    #                 location,
-    #                 link,
-    #             ]
-    #         )
-
-    # driver.quit()
-
+    driver.quit()
     updateDB(key, data)
 
 
