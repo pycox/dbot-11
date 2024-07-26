@@ -5,9 +5,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 136
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -23,32 +22,33 @@ def main():
         print(f"Scraper{key} cookie Button: {e}")
 
     time.sleep(4)
+    
+    flag = True
+    while flag:
+        time.sleep(4)
+        try:
+            driver.find_element(By.CSS_SELECTOR, ".button-load-more-circle").click()
+        except Exception:
+            flag = False
 
-    items = driver.find_elements(By.CSS_SELECTOR, "div.greenhouse-job-listing")
+    items = driver.find_elements(By.CSS_SELECTOR, ".search-results-container a[class=\"group\"]")
 
     data = []
 
     for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.get_attribute("data-sort-path").strip()
-
-        for str in [
-            "London",
-            "New York",
-            "San Francisco",
-            "United States",
-            "United Kingdom",
-        ]:
+        link = item.get_attribute("href")
+        location = item.find_element(By.CSS_SELECTOR, "span").text.strip()
+        for str in locations:
             if str in location:
-
                 data.append(
                     [
-                        item.find_element(By.CSS_SELECTOR, "a").text.strip(),
+                        item.find_element(By.CSS_SELECTOR, ".career-result-h").text.strip(),
                         com,
                         location,
                         link,
                     ]
                 )
+                break
     driver.quit()
 
     updateDB(key, data)
