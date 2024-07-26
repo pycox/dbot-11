@@ -5,9 +5,7 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 109
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -21,31 +19,25 @@ def main():
         print(f"Scraper{key} cookiee button: {e}")
 
     time.sleep(4)
-
-    # try:
-    #     driver.find_element(By.CSS_SELECTOR, "div.dy-lb-close").click()
-    # except Exception as e:
-    #     print(f"Scraper{key} cookiee button: {e}")
-
-    # time.sleep(4)
-
-    items = driver.find_elements(By.CSS_SELECTOR, "div.rt-tr-group")
-
     data = []
 
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+    if "UK" in locations:
+        items = driver.find_elements(By.CSS_SELECTOR, "div.rt-tr-group")
 
-        data.append(
-            [
-                item.find_element(By.CSS_SELECTOR, "a").text.strip(),
-                com,
-                item.find_element(By.CSS_SELECTOR, "div").get_attribute(
-                    "data-location"
-                ),
-                link,
-            ]
-        )
+
+        for item in items:
+            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+
+            data.append(
+                [
+                    item.find_element(By.CSS_SELECTOR, "a").text.strip(),
+                    com,
+                    item.find_element(By.CSS_SELECTOR, "div").get_attribute(
+                        "data-location"
+                    ),
+                    link,
+                ]
+            )
 
     driver.quit()
 
