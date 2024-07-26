@@ -1,13 +1,15 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 133
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -15,52 +17,28 @@ def main():
 
     time.sleep(4)
 
-    # try:
-    #     driver.find_element(
-    #         By.CSS_SELECTOR,
-    #         "button[data-action='click->common--cookies--alert#acceptAll']",
-    #     ).click()
-    # except Exception as e:
-    #     print(f"Scraper{key} cookie Button: {e}")
-
-    # time.sleep(4)
-
-    dom = driver.find_element(By.CSS_SELECTOR, "ul#jobs_list_container")
-
-    flag = True
     data = []
-
-    while flag:
-        try:
-            time.sleep(4)
-
-            nextBtn = driver.find_elements(By.CSS_SELECTOR, "a#show_more_button")
-
-            if len(nextBtn) > 0:
-                nextBtn[0].click()
-            else:
-                flag = False
-                break
-        except:
-            flag = False
-            break
-
-    items = dom.find_elements(By.CSS_SELECTOR, "li")
-
+    
+    iframe = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "rr-job-board-iframe")))
+    driver.switch_to.frame(iframe)
+    
+    items = driver.find_elements(By.CSS_SELECTOR, ".css-oxhdrx")
     for item in items:
         link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-
-        data.append(
-            [
-                item.find_element(By.CSS_SELECTOR, "span").text.strip(),
-                com,
-                "UK",
-                link,
-            ]
-        )
+        location = item.find_element(By.CSS_SELECTOR, ".css-mwvv03 div:nth-child(2) p").text.strip()
+        for str in locations:
+            if (str in location):
+                data.append(
+                    [
+                        item.find_element(By.CSS_SELECTOR, "a").text.strip(),
+                        com,
+                        location,
+                        link,
+                    ]
+                )
+                break
 
     driver.quit()
-
     updateDB(key, data)
 
 
