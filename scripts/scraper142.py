@@ -5,9 +5,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 142
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -34,21 +33,17 @@ def main():
                 title = item.find_element(
                     By.CSS_SELECTOR, "p.news-grid__items_title"
                 ).text.strip()
-
-                availableArea =  [
-                    "London",
-                    "UK",
-                    "USA",
-                ]
-                if any(ext in location for ext in availableArea):
-                    data.append(
-                        [
-                            title,
-                            com,
-                            location,
-                            url,
-                        ]
-                    )
+                for str in locations:
+                    if (str in location):
+                        data.append(
+                            [
+                                title,
+                                com,
+                                location,
+                                url,
+                            ]
+                        )
+                        break
             try:
                 nextBtn = driver.find_element(By.CSS_SELECTOR, "a.next.page-numbers")
                 nextBtn.click()
