@@ -134,9 +134,6 @@ def updateHistory(key, val):
 
 
 def updateDB(key=None, arr=[]):
-    if key:
-        print(key, arr)
-    return
     global cashData
 
     if key is None:
