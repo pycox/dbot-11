@@ -1,13 +1,12 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import Select
 from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 105
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -15,28 +14,26 @@ def main():
 
     time.sleep(4)
 
-    items = driver.find_elements(By.CSS_SELECTOR, "div.rounded-all")
-
     data = []
-
+    
+    items = driver.find_elements(By.CSS_SELECTOR, ".career2_item")
     for item in items:
         link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(
-            By.CSS_SELECTOR, 'p[data-tag="displayJobLocation"]'
-        ).text.strip()
+        location = item.find_element(By.CSS_SELECTOR, "div[identifier='job-location']").text.strip()
+        for str in locations:
+            if (str in location):
+                data.append(
+                    [
+                        item.find_element(By.CSS_SELECTOR, "div[identifier='job-title']").text.strip(),
+                        com,
+                        location,
+                        link,
+                    ]
+                )
+                break
 
-        if location in ["United Kingdom", "United States"]:
-            data.append(
-                [
-                    item.find_element(By.CSS_SELECTOR, "p").text.strip(),
-                    com,
-                    location,
-                    link,
-                ]
-            )
 
     driver.quit()
-    
     updateDB(key, data)
 
 
