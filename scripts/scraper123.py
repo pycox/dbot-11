@@ -5,9 +5,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 123
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -38,15 +37,8 @@ def main():
             By.CSS_SELECTOR, "span.BambooHR-ATS-Location"
         ).text.strip()
 
-        for str in [
-            "London",
-            "New York",
-            "San Francisco",
-            "United States",
-            "United Kingdom",
-        ]:
+        for str in locations:
             if str in location:
-
                 data.append(
                     [
                         item.find_element(By.CSS_SELECTOR, "a").text.strip(),
@@ -55,6 +47,7 @@ def main():
                         link,
                     ]
                 )
+                break
 
     driver.quit()
 
