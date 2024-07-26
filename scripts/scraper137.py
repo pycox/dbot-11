@@ -5,62 +5,61 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 137
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    flag = True
+    time.sleep(2)
+
     data = []
+    regions = []
 
-    # while flag:
-    #     try:
-    #         time.sleep(4)
+    if "UK" in locations:
+        regions.append("United Kingdom")
+    if "US" in locations:
+        regions.append("United States")
+    
+    button = driver.find_element(By.CSS_SELECTOR, "div[data-filter=\"city.id\"] .sidebar__filter-title-toggle")
+    driver.execute_script("arguments[0].scrollIntoView();", button)
+    driver.execute_script("arguments[0].click();", button)
+    time.sleep(3)
 
-    #         items = driver.find_elements(By.CSS_SELECTOR, "div.card")
+    for region in regions:
+        span_element = driver.find_element(By.CSS_SELECTOR, f'span[data-original-title="{region}"]')
+        driver.execute_script("arguments[0].scrollIntoView();", span_element)
+        checkbox = span_element.find_element(By.XPATH, "./preceding-sibling::div//input[@type='checkbox']")
+        checkbox.click()
+        time.sleep(4)
 
-    #         for item in items:
-    #             link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
-    #             location = item.find_element(
-    #                 By.CSS_SELECTOR, "span.vacancyColumn"
-    #             ).text.strip()
-
-    #             for str in [
-    #                 "London",
-    #                 "New York",
-    #                 "San Francisco",
-    #                 "United States",
-    #                 "United Kingdom",
-    #             ]:
-    #                 if str in location:
-
-    #                     data.append(
-    #                         [
-    #                             item.find_element(
-    #                                 By.CSS_SELECTOR, "div.rowHeader"
-    #                             ).text.strip(),
-    #                             com,
-    #                             location,
-    #                             link,
-    #                         ]
-    #                     )
-
-    #                     break
-
-    #         nextBtn = driver.find_element(By.CSS_SELECTOR, "a.scroller_movenext")
-
-    #         if nextBtn.get_attribute("disabled") == "true":
-
-    #             flag = False
-    #             break
-    #         else:
-    #             nextBtn.click()
-    #     except:
-    #         flag = False
-
+    flag = True
+    
+    if regions:
+        while flag:
+            items = driver.find_elements(By.CSS_SELECTOR, "#jobs-accordion .card")
+            for item in items:
+                data.append(
+                    [
+                        item.find_element(By.CSS_SELECTOR, ".card-header__job-position").text.strip(),
+                        com,
+                        item.find_element(By.CSS_SELECTOR, ".card-header__job-place").text.strip(),
+                        item.find_element(By.CSS_SELECTOR, "a.job-link-open").get_attribute("href").strip(),
+                    ]
+                )
+            
+            try:
+                next_button = driver.find_element(By.CSS_SELECTOR, 'a.page-next')
+                if "page-link__disabled" in next_button.get_attribute("class"):
+                    flag = False
+                else:
+                    driver.execute_script("arguments[0].click();", next_button)
+                    
+                time.sleep(4)
+            except Exception as e:
+                flag = False
+                print("No More Jobs", e)
+    
     driver.quit()
 
     updateDB(key, data)
