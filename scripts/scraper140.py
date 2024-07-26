@@ -3,11 +3,12 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from utils import readUrl, updateDB
 import time
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 
-def main():
-    key = 140
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -15,46 +16,33 @@ def main():
 
     time.sleep(4)
 
-    # try:
-    #     driver.find_element(
-    #         By.CSS_SELECTOR, "button#CybotCookiebotDialogBodyButtonAccept"
-    #     ).click()
-    # except Exception as e:
-    #     print(f"Scraper{key} cookie Button: {e}")
+    iframe = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "iframe")))
+    driver.switch_to.frame(iframe)
 
-    # time.sleep(4)
-
-    # items = driver.find_element(By.CSS_SELECTOR, "div#all").find_elements(
-    #     By.CSS_SELECTOR, "a.job-box"
-    # )
+    items = driver.find_elements(By.CSS_SELECTOR, ".opening")
 
     data = []
 
-    # for item in items:
-    #     link = item.get_attribute("href").strip()
-    #     title = item.find_element(By.CSS_SELECTOR, "div.jb-title").text.strip()
-    #     location = (
-    #         item.find_element(By.CSS_SELECTOR, "div.jb-description")
-    #         .text.split("·")[-1]
-    #         .strip()
-    #     )
+    for item in items:
+        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+        title = item.find_element(By.CSS_SELECTOR, "a").text.strip()
+        location = (
+            item.find_element(By.CSS_SELECTOR, ".location")
+            .text
+            .strip()
+        )
 
-    #     for str in [
-    #         "London",
-    #         "New York",
-    #         "San Francisco",
-    #         "US",
-    #         "UK",
-    #     ]:
-    #         if str in location:
-    #             data.append(
-    #                 [
-    #                     title,
-    #                     com,
-    #                     location,
-    #                     link,
-    #                 ]
-    #             )
+        for str in locations:
+            if str in location:
+                data.append(
+                    [
+                        title,
+                        com,
+                        location,
+                        link,
+                    ]
+                )
+                break
 
     driver.quit()
 
