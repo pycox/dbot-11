@@ -5,9 +5,7 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 107
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -17,7 +15,7 @@ def main():
 
     try:
         driver.find_element(
-            By.CSS_SELECTOR, "button#onetrust-accept-btn-handler"
+            By.CSS_SELECTOR, "button.osano-cm-button--type_accept"
         ).click()
     except Exception as e:
         print(f"Scraper{key} cookiee button: {e}")
@@ -41,17 +39,19 @@ def main():
                     By.CSS_SELECTOR, 'h4[data-testid="JobListings-location"]'
                 ).text.strip()
 
-                if location in ["United Kingdom", "United States"]:
-                    data.append(
-                        [
-                            item.find_element(
-                                By.CSS_SELECTOR, 'h3[data-testid="JobListings-title"]'
-                            ).text.strip(),
-                            com,
-                            location,
-                            link,
-                        ]
-                    )
+                for str in locations:
+                    if (str in location):
+                        data.append(
+                            [
+                                item.find_element(
+                                    By.CSS_SELECTOR, 'h3[data-testid="JobListings-title"]'
+                                ).text.strip(),
+                                com,
+                                location,
+                                link,
+                            ]
+                        )
+                        break
 
             nextBtn = driver.find_element(By.CSS_SELECTOR, 'button[aria-label="next"]')
 
