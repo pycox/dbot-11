@@ -5,9 +5,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 112
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -15,32 +14,31 @@ def main():
 
     time.sleep(4)
 
-    # try:
-    #     driver.find_element(By.CSS_SELECTOR, "button.js-accept").click()
-    # except Exception as e:
-    #     print(f"Scraper{key} cookiee button: {e}")
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight - 3000);")
 
-    # time.sleep(4)
-
-    # items = driver.find_elements(By.CSS_SELECTOR, "div.job-row")
+    time.sleep(8)
+    
+    items = driver.find_elements(By.CSS_SELECTOR, ".job-item-content")
 
     data = []
 
-    # for item in items:
-    #     link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-    #     location = item.find_element(By.CSS_SELECTOR, "div.job-location").text.strip()
+    for item in items:
+        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+        title = item.find_element(By.CSS_SELECTOR, "h2").text.strip()
+        location = item.find_element(By.CSS_SELECTOR, ".job-location").text.strip()
+        for str in locations:
+            if (str in location):
+                data.append(
+                    [
+                        title,
+                        com,
+                        location,
+                        link,
+                    ]
+                )
+                break
 
-    #     if location.split(",")[-1].strip() in ["United Kingdom", "United States"]:
-    #         data.append(
-    #             [
-    #                 item.find_element(By.CSS_SELECTOR, "a").text.strip(),
-    #                 com,
-    #                 location,
-    #                 link,
-    #             ]
-    #         )
-
-    # driver.quit()
+    driver.quit()
 
     updateDB(key, data)
 
