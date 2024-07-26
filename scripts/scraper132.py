@@ -1,13 +1,13 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import Select
 from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 132
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -15,38 +15,25 @@ def main():
 
     time.sleep(2)
 
-    try:
-        driver.find_element(
-            By.CSS_SELECTOR,
-            "button.gdprcookie-acceptallbutton",
-        ).click()
-    except Exception as e:
-        print(f"Scraper{key} cookiee button: {e}")
-
-    time.sleep(2)
-
-    items = driver.find_elements(By.CSS_SELECTOR, "div.rowContainer")
-
     data = []
-
+    
+    items = driver.find_elements(By.CSS_SELECTOR, "a.posting-title")
     for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        title = item.find_element(By.CSS_SELECTOR, "a").text.strip()
-        location = item.find_element(
-            By.CSS_SELECTOR, "span.city_vacancyColumn"
-        ).text.strip()
+        location = item.find_element(By.CSS_SELECTOR, "span.sort-by-location.location").text.strip()
+        for str in locations:
+            if (str in location):
+                data.append(
+                    [
+                        item.find_element(By.CSS_SELECTOR, "h5").text.strip(),
+                        com,
+                        location,
+                        item.get_attribute("href").strip(),
+                    ]
+                )
+                break
 
-        data.append(
-            [
-                title,
-                com,
-                location,
-                link,
-            ]
-        )
 
     driver.quit()
-
     updateDB(key, data)
 
 
