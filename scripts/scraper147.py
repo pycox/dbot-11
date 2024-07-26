@@ -8,18 +8,13 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 147
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    loationSelect = driver.find_element(By.CSS_SELECTOR, "div[data-ui='locations-filter']")
-    loationSelect.click()
-    time.sleep(2)
-    loationSelect.find_element(By.CSS_SELECTOR, "li[value='1']").click()
     time.sleep(2)
 
     flag = True
@@ -40,13 +35,16 @@ def main():
     for item in items:
         link = item.find_element(By.CSS_SELECTOR, "a").get_attribute('href')
         title = item.find_element(By.CSS_SELECTOR, "h3[data-ui='job-title'] > span").text.strip()
-        location = item.find_element(By.CSS_SELECTOR, "span[data-ui='job-location']").text.strip()
-        data.append([
-            title,
-            com,
-            location,
-            link
-        ])
+        location = item.find_element(By.CSS_SELECTOR, "div[data-ui='job-location']").text.strip()
+        for str in locations:
+            if (str in location):
+                data.append([
+                    title,
+                    com,
+                    location,
+                    link
+                ])
+                break
 
     updateDB(key, data)
 
