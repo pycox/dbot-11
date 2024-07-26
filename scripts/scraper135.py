@@ -5,42 +5,42 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 135
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    time.sleep(8)
+    time.sleep(4)
 
-    items = len(driver.find_elements(By.CSS_SELECTOR, "div.current-openings-item"))
+    try:
+        driver.find_element(
+            By.CSS_SELECTOR,
+            "button#onetrust-accept-btn-handler",
+        ).click()
+    except Exception as e:
+        print(f"Scraper{key} cookiee button: {e}")
+
+    time.sleep(4)
 
     data = []
 
-    for i in range(0, items):
-        item = driver.find_elements(By.CSS_SELECTOR, "div.current-openings-item")[i]
-        
-        title = item.find_element(
-            By.CSS_SELECTOR, "span.current-opening-title"
-        ).text.strip()
-        location = item.find_element(
-            By.CSS_SELECTOR, "div.current-opening-locations"
-        ).text.strip()
+    if "UK" in locations:
 
-        item.find_element(By.CSS_SELECTOR, "button").click()
+        items = driver.find_elements(By.CSS_SELECTOR, ".wp-block-simply-business-job-listing__title a")
 
-        time.sleep(4)
+        for item in items:
+            link = item.get_attribute("href")
+            data.append(
+                [
+                    item.text.strip(),
+                    com,
+                    "London, UK",
+                    link,
+                ]
+            )
 
-        data.append([title, com, location, driver.current_url])
-
-        driver.find_element(
-            By.CSS_SELECTOR, "button#recruitment_jobDescription_back"
-        ).click()
-
-        time.sleep(4)
-        
     driver.quit()
 
     updateDB(key, data)
