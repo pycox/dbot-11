@@ -5,14 +5,19 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 154
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
-    driver.get(url)
+    if all(loc in locations for loc in ["US", "UK"]):
+        url += "?locationCountry=bc33aa3152ec42d4995f4791a106ed09&locationCountry=29247e57dbaf46fb855b224e03170bc7"
+    elif "US" in locations:
+        url += "?locationCountry=bc33aa3152ec42d4995f4791a106ed09"
+    elif "UK" in locations:
+        url += "?locationCountry=29247e57dbaf46fb855b224e03170bc7"
 
+    driver.get(url)
     flag = True
     data = []
 
