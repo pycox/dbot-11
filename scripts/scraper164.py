@@ -5,9 +5,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 164
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -20,19 +19,15 @@ def main():
     except Exception as e:
         print(f"Scraper{key} cookiee button: {e}")
 
-    flag = False
+    flag = True
 
     while flag:
         try:
+            button = driver.find_element(By.CSS_SELECTOR, "a[aria-label=\"Load More about jobs\"]")
+            driver.execute_script("arguments[0].scrollIntoView();", button)
+            time.sleep(2)
+            driver.execute_script("arguments[0].click();", button)
             time.sleep(4)
-
-            nextBtn = driver.find_elements(By.CSS_SELECTOR, "a.filters-more")
-
-            if len(nextBtn) > 0:
-                nextBtn[0].click()
-            else:
-                flag = False
-                break
         except:
             flag = False
             break
@@ -47,15 +42,18 @@ def main():
             By.XPATH,
             ".//span[contains(text(), 'Location')]/following-sibling::div",
         ).text.strip()
+        for str in locations:
+            if (str in location):
 
-        data.append(
-            [
-                item.find_element(By.CSS_SELECTOR, "div.table-title").text.strip(),
-                com,
-                location,
-                link,
-            ]
-        )
+                data.append(
+                    [
+                        item.find_element(By.CSS_SELECTOR, "div.table-title").text.strip(),
+                        com,
+                        location,
+                        link,
+                    ]
+                )
+                break
 
     driver.quit()
 
