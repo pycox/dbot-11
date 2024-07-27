@@ -5,9 +5,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 188
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -15,25 +14,39 @@ def main():
 
     time.sleep(4)
 
-    items = driver.find_elements(By.CSS_SELECTOR, "div.c-jobs-listing__item")
 
     data = []
 
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, 'div.c-jobs-listing__detail.c-jobs-listing__detail--location').text.strip()
+    active_page = 1
+    total_page = int(driver.find_elements(By.CSS_SELECTOR, ".c-jobs-listing__pagination-link")[-1].text.strip())
 
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
-            if (str in location):
-                data.append(
-                    [
-                        item.find_element(By.CSS_SELECTOR, "a").text.strip(),
-                        com,
-                        location,
-                        link,
-                    ]
-                )
-                break
+    while total_page > active_page:
+        
+        items = driver.find_elements(By.CSS_SELECTOR, "div.c-jobs-listing__item")
+        for item in items:
+            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+            location = item.find_element(By.CSS_SELECTOR, 'div.c-jobs-listing__detail.c-jobs-listing__detail--location').text.strip()
+
+            for str in locations:
+                if (str in location):
+                    data.append(
+                        [
+                            item.find_element(By.CSS_SELECTOR, "a").text.strip(),
+                            com,
+                            location,
+                            link,
+                        ]
+                    )
+                    break
+        
+        try:
+            active_page += 1
+            button = driver.find_elements(By.CSS_SELECTOR, ".c-jobs-listing__pagination-link")[active_page-1]
+            driver.execute_script("arguments[0].click();", button)
+            time.sleep(4)
+        except:
+            active_page = total_page + 1
+            print("No More Jobs")
 
     driver.quit()
 
