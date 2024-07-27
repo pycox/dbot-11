@@ -5,70 +5,51 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 163
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    # time.sleep(4)
+    time.sleep(2)
 
-    # try:
-    #     driver.find_element(By.CSS_SELECTOR, "a#hs-eu-confirmation-button").click()
-    # except Exception as e:
-    #     print(f"Scraper{key} cookiee button: {e}")
+    try:
+        driver.find_element(
+            By.CSS_SELECTOR,
+            "#onetrust-accept-btn-handler",
+        ).click()
+    except Exception as e:
+        print(f"Scraper{key} cookiee button: {e}")
 
-    time.sleep(4)
+    time.sleep(2)
 
     data = []
 
-    # items = driver.find_elements(
-    #     By.CSS_SELECTOR, "div[data-content-type='text'][data-element='main']"
-    # )
+    if "UK" in locations:
+        items = driver.find_elements(By.CSS_SELECTOR, ".row-full-width-inner div[data-content-type=\"text\"]")
 
-    # for item in items:
-    #     title = (
-    #         item.find_element(
-    #             By.CSS_SELECTOR,
-    #             "strong",
-    #         ).text
-    #         if item.find_element(
-    #             By.CSS_SELECTOR,
-    #             "strong",
-    #         )
-    #         else None
-    #     )
 
-    #     if title is None:
-    #         continue
+        for item in items:
+            try:
+                if not item.find_elements(By.CSS_SELECTOR, "strong"):
+                    continue
+                title = item.find_elements(By.CSS_SELECTOR, "p")[1].text.strip()
+                if not title:
+                    continue
+                title = title.split("\n")[0].split(":")[1].strip()
+                link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+            except:
+                continue
 
-    #     # link = (
-    #     #     item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-    #     #     if item.find_element(
-    #     #         By.CSS_SELECTOR,
-    #     #         "a",
-    #     #     )
-    #     #     else None
-    #     # )
-
-    #     # if link is None:
-    #     #     continue
-
-    #     # location = item.find_element(
-    #     #     By.XPATH,
-    #     #     ".//strong[contains(text(), 'Location:')]/following-sibling::*[1]",
-    #     # ).text
-
-    #     data.append(
-    #         [
-    #             title,
-    #             com,
-    #             # location.text.strip(),
-    #             # link,
-    #         ]
-    #     )
+            data.append(
+                [
+                    title,
+                    com,
+                    "UK",
+                    link,
+                ]
+            )
 
     driver.quit()
 
