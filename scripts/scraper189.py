@@ -5,9 +5,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 189
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -15,26 +14,35 @@ def main():
 
     time.sleep(4)
 
-    items = driver.find_elements(By.CSS_SELECTOR, "div.jobs-card")
 
     data = []
 
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, 'div.jobs-card__location > span').text.strip()
-
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
-            if (str in location):
+    if "UK" in locations:
+    
+        flag = True
+        while flag:
+            items = driver.find_elements(By.CSS_SELECTOR, "div.jobs-card")
+            for item in items:
+                link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
                 data.append(
                     [
                         item.find_element(By.CSS_SELECTOR, "h3").text.strip(),
                         com,
-                        location,
+                        "UK",
                         link,
                     ]
                 )
 
-                break
+            try:
+                curr_button = int(driver.find_element(By.CSS_SELECTOR, 'li.active a.page-update').text.strip())
+                next_button = driver.find_element(By.CSS_SELECTOR, f'li a[data-page="{curr_button+1}"]')
+                driver.execute_script("arguments[0].click();", next_button)
+                
+                time.sleep(6)
+            except Exception as e:
+                flag = False
+                print("No More Jobs", e)
+            
 
     driver.quit()
 
