@@ -5,29 +5,30 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 194
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
     time.sleep(4)
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    time.sleep(4)
 
-    items = driver.find_elements(By.CSS_SELECTOR, "a.card.jobs-item")
 
     data = []
 
+    items = driver.find_elements(By.CSS_SELECTOR, "#jobs-feed a")
     for item in items:
         link = item.get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, 'div.card-header > ul > li[title="Location"]').text.strip()
+        location = item.find_element(By.CSS_SELECTOR, 'li[title="Location"]').text.strip()
 
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
+        for str in locations:
             if (str in location):
                 data.append(
                     [
-                        item.find_element(By.CSS_SELECTOR, "div.card-header > h2").text.strip(),
+                        item.find_element(By.CSS_SELECTOR, "p.lead").text.strip(),
                         com,
                         location,
                         link,
