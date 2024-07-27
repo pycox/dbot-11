@@ -1,13 +1,13 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import Select
 from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 195
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -15,19 +15,24 @@ def main():
 
     time.sleep(4)
 
-    items = driver.find_elements(By.CSS_SELECTOR, "ul#jobs_list_container > li")
+    try:
+        driver.find_element(By.CSS_SELECTOR, 'button[data-cky-tag="reject-button"]').click()
+    except:
+        print("No Cookie Button")
+
+    time.sleep(4)
 
     data = []
 
+    items = driver.find_elements(By.CSS_SELECTOR, ".workable__job")
     for item in items:
         link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, 'div.mt-1.text-md > span:last-child').text.strip()
-
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
+        location = item.find_element(By.CSS_SELECTOR, ".workable__job-tags.text-right span:nth-child(2)").text.strip()
+        for str in locations:
             if (str in location):
                 data.append(
                     [
-                        item.find_element(By.CSS_SELECTOR, "span").text.strip(),
+                        item.find_element(By.CSS_SELECTOR, ".workable__job-title").text.strip(),
                         com,
                         location,
                         link,
@@ -36,7 +41,6 @@ def main():
                 break
 
     driver.quit()
-
     updateDB(key, data)
 
 
