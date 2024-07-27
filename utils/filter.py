@@ -42,7 +42,8 @@ def getLocations(location):
             "Bristol", "BRISTOL", "Tamworth", "TAMWORTH", "Brighton", "BRIGHTON",
             "England", "ENGLAND", "Birmingham", "BIRMINGHAM",
             "Cambridge", "CAMBRIDGE", "Manchester", "MANCHESTER",
-            "Scotland", "SCOTLAND", "Leeds", "LEEDS", "Belfast", "Remote"
+            "Scotland", "SCOTLAND", "Leeds", "LEEDS", "Belfast",
+            "Liverpool", "Remote"
         ),
         "US": (
             "US", "USA", "UNITED STATES", "United States", "New York", 
@@ -72,7 +73,7 @@ def filterUrls():
     if ws["D1"].value != "yes":
         return urls
     
-    for row in ws.iter_rows(min_row=2, max_row=150):
+    for row in ws.iter_rows(min_row=2, max_row=200):
     # for row in ws.iter_rows(min_row=1):
 
         if row[0].value == "ID" or row[0].value is None:
