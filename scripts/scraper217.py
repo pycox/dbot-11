@@ -5,9 +5,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 217
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -15,19 +14,18 @@ def main():
 
     time.sleep(4)
 
-    items = driver.find_elements(By.CSS_SELECTOR, "div.nectar-hor-list-item.has-btn")
 
     data = []
 
+    items = driver.find_elements(By.CSS_SELECTOR, "output  > div > div > div > div")
     for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a.full-link").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, 'div:nth-child(2)').text.strip()
-
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US', 'GB']:
+        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+        location = item.find_element(By.CSS_SELECTOR, 'ul li').text.strip()
+        for str in locations:
             if (str in location):
                 data.append(
                     [
-                        item.find_element(By.CSS_SELECTOR, "div:first-child").text.strip(),
+                        item.find_element(By.CSS_SELECTOR, "a").text.strip(),
                         com,
                         location,
                         link,
