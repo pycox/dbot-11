@@ -1,13 +1,13 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import Select
 from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 240
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -15,28 +15,49 @@ def main():
 
     time.sleep(4)
 
-    items = driver.find_elements(By.CSS_SELECTOR, "ul.positions.location")
-
     data = []
+    regions = []
+    
+    if "UK" in locations:
+        regions.append(("UK", ["172", "413", "174", "175", "176", "177", "178", "179", "180", "181", "183", "184", "185", "186"]))
+    if "US" in locations:
+        regions.append(("USA", ["204"]))
+    
+    for location, loc_codes in regions:
+        Select(driver.find_element(By.CSS_SELECTOR, "select#field_31")).deselect_all()
+        for loc_code in loc_codes:
+            Select(driver.find_element(By.CSS_SELECTOR, "select#field_31")).select_by_value(loc_code)
+        time.sleep(2)
+        driver.find_element(By.CSS_SELECTOR, "#submit").click()
+        time.sleep(4)
 
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, 'li.location').text.strip()
-
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US', "GB"]:
-            if (str in location):
+        flag = True
+        while flag:
+            items = driver.find_elements(By.CSS_SELECTOR, ".vacancy")
+            for item in items:
+                link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
                 data.append(
                     [
-                        item.find_element(By.CSS_SELECTOR, "h2").text.strip(),
+                        item.find_element(By.CSS_SELECTOR, "h3").text.strip(),
                         com,
                         location,
                         link,
                     ]
                 )
-                break
 
+            try:
+                next_button = driver.find_element(By.CSS_SELECTOR, '.paging_links a:nth-child(1)')
+                if not next_button.text.startswith("Next"):
+                    flag = False
+                else:
+                    next_button.click()
+                    
+                time.sleep(4)
+            except:
+                flag = False
+                print("No More Jobs")
+                
     driver.quit()
-
     updateDB(key, data)
 
 
