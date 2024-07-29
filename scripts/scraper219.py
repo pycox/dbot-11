@@ -5,9 +5,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 219
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -25,7 +24,7 @@ def main():
             link = item.find_element(By.CSS_SELECTOR, "a[data-ph-at-id='job-link']").get_attribute("href").strip()
             location = item.find_element(By.CSS_SELECTOR, 'span[data-ph-id="ph-page-element-page11-z1v2dX"]').text.strip()
 
-            for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US', 'GB']:
+            for str in locations:
                 if (str in location):
                     data.append(
                         [
@@ -40,7 +39,7 @@ def main():
             print("No Job")
 
       try:
-        button = driver.find_element(By.CSS_SELECTOR, "a.next-btn.au-target").click()
+        driver.find_element(By.CSS_SELECTOR, "a.next-btn.au-target").click()
         time.sleep(4)
       except:
         flag = False
