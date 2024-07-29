@@ -5,46 +5,71 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 239
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    time.sleep(4)
+    time.sleep(2)
 
+    try:
+        driver.find_element(By.CSS_SELECTOR, "#onetrust-accept-btn-handler").click()
+    except Exception as e:
+        print(f"Scraper{key} cookiee button: {e}")
+
+    time.sleep(2)
     data = []
+    regions = []
 
-    flag = True
-    while flag:
-      time.sleep(4)
-      items = driver.find_elements(By.CSS_SELECTOR, "li.jobs-list-item")
-      for item in items:
-          link = item.find_element(By.CSS_SELECTOR, "a[data-ph-at-id='job-link']").get_attribute("href").strip()
-          location = item.find_element(By.CSS_SELECTOR, 'span[data-ph-at-id="job-multi-location-item"]').text.strip()
-          location = location.replace("Location", "").replace("\n", "")
-          
-          for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US', 'GB', "United States Of America"]:
-              if (str in location):
-                  data.append(
-                      [
-                          item.find_element(By.CSS_SELECTOR, "span[data-ph-id='ph-page-element-page13-S1igwT']").text.strip(),
-                          com,
-                          location,
-                          link,
-                      ]
-                  )
-                  break
-      try:
-        button = driver.find_element(By.CSS_SELECTOR, "a.next-btn.au-target").click()
+    if "UK" in locations:
+        regions.append("United Kingdom")
+    if "US" in locations:
+        regions.append("United States of America")
+    
+    for region in regions:
+        button = driver.find_element(By.CSS_SELECTOR, "button[aria-label=\"Country\"]")
+        driver.execute_script("arguments[0].scrollIntoView();", button)
+        driver.execute_script("arguments[0].click();", button)
+        time.sleep(3)
+        button = driver.find_element(By.CSS_SELECTOR, f'label input[data-ph-at-text="{region}"]')
+        driver.execute_script("arguments[0].scrollIntoView();", button)
+        driver.execute_script("arguments[0].click();", button)
+        time.sleep(3)
+        
+        flag = True
+        
+        while flag:
+            items = driver.find_elements(By.CSS_SELECTOR, "li.jobs-list-item")
+            for item in items:
+                link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+                title = driver.execute_script("return arguments[0].innerText;", item.find_element(By.CSS_SELECTOR, ".job-title"))
+                
+                data.append(
+                    [
+                        title.strip(),
+                        com,
+                        region,
+                        link,
+                    ]
+                )
+
+            try:
+                next_button = driver.find_element(By.CSS_SELECTOR, 'a.next-btn')
+                if "aurelia-hide" in next_button.get_attribute("class"):
+                    flag = False
+                else:
+                    driver.execute_script("arguments[0].click();", next_button)
+                    
+                time.sleep(4)
+            except Exception as e:
+                flag = False
+                print("No More Jobs", e)
+        
+        button = driver.find_element(By.CSS_SELECTOR, 'button.clearall.au-target')
+        driver.execute_script("arguments[0].click();", button)
         time.sleep(4)
-      except:
-        flag = False
-        print("No more pages")
-
-
+            
     driver.quit()
 
     updateDB(key, data)
