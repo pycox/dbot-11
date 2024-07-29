@@ -1,13 +1,15 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 238
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -15,22 +17,40 @@ def main():
 
     time.sleep(4)
 
-    items = driver.find_elements(By.CSS_SELECTOR, "ul#jobs_list_container > li")
-
     data = []
-
+    
+    try:
+        driver.find_element(By.CSS_SELECTOR, 'button.acceptAllCookies').click()
+        time.sleep(2)
+    except:
+        print("No Cookie Button")
+    
+    try:
+        driver.find_element(By.CSS_SELECTOR, 'li[data-term-id="248"]').click()
+        driver.find_element(By.CSS_SELECTOR, 'li[data-term-id="239"]').click()
+        driver.find_element(By.CSS_SELECTOR, 'button[aria-label="Agree"]').click()
+        driver.find_element(By.CSS_SELECTOR, 'label[for="ldReadDiscalimer2"]').click()
+        button = driver.find_element(By.CSS_SELECTOR, 'button[aria-label="Agree"]')
+        driver.execute_script("arguments[0].click();", button)
+    except Exception as e:
+        print("No Button")
+        
+    
+    time.sleep(4)
+    
+    items = driver.find_elements(By.CSS_SELECTOR, ".section__content .section__entry p span a")
+    
     for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        try:
-          location = item.find_element(By.CSS_SELECTOR, 'div > span:nth-child(3)').text.strip()
-        except:
-          location = item.find_element(By.CSS_SELECTOR, 'div > span').text.strip()
-
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
+        text = driver.execute_script("return arguments[0].innerText;", item)
+        if not text:
+            continue
+        title, location = text.replace(">>", "").strip().split("-")
+        link = item.get_attribute("href").strip()
+        for str in locations:
             if (str in location):
                 data.append(
                     [
-                        item.find_element(By.CSS_SELECTOR, "span").text.strip(),
+                        title,
                         com,
                         location,
                         link,
@@ -38,8 +58,8 @@ def main():
                 )
                 break
 
-    driver.quit()
 
+    driver.quit()
     updateDB(key, data)
 
 
