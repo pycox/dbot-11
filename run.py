@@ -4,7 +4,7 @@ from utils import updateDB, filterUrls, getBotSpeed
 
 num_threads = getBotSpeed()
 
-scraper_modules = [f"scripts.scraper{id}" for id in filterUrls()]
+# scraper_modules = [f"scripts.scraper{id}" for id in filterUrls()]
 
 
 def scraping(id, name, url, location):
