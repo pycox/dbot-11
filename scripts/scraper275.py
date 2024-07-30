@@ -5,9 +5,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 275
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -15,22 +14,34 @@ def main():
 
     time.sleep(4)
 
-    items = driver.find_elements(By.CSS_SELECTOR, "div#widget-jobsearch-results-list > div")
-
     data = []
+    
+    if "US" in locations:
 
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, 'div.joblist-location').text.strip()
+        flag = True
+        while flag:
+            items = driver.find_elements(By.CSS_SELECTOR, "div#widget-jobsearch-results-list > div")
+            for item in items:
+                link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+                location = item.find_element(By.CSS_SELECTOR, 'div.joblist-location').text.strip()
 
-        data.append(
-            [
-                item.find_element(By.CSS_SELECTOR, "a").text.strip(),
-                com,
-                location,
-                link,
-            ]
-        )
+                data.append(
+                    [
+                        item.find_element(By.CSS_SELECTOR, "a").text.strip(),
+                        com,
+                        location,
+                        link,
+                    ]
+                )
+            
+            try:
+                button = driver.find_element(By.CSS_SELECTOR, 'a[aria-label="Go to the next page of results."]')
+                driver.execute_script("arguments[0].scrollIntoView();", button)
+                driver.execute_script("arguments[0].click();", button)
+                time.sleep(4)
+            except Exception as e:
+                flag = False
+                print("No More Jobs", e)
 
     driver.quit()
 
