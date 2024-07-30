@@ -5,9 +5,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 258
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -15,22 +14,34 @@ def main():
 
     time.sleep(4)
 
-    items = driver.find_elements(By.CSS_SELECTOR, "table#searchresults > tbody > tr")
 
     data = []
 
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, 'span.jobLocation').text.strip()
 
-        data.append(
-            [
-                item.find_element(By.CSS_SELECTOR, "a").text.strip(),
-                com,
-                location,
-                link,
-            ]
-        )
+    if "UK" in locations:
+        flag = True
+        while flag:
+            items = driver.find_elements(By.CSS_SELECTOR, "table#searchresults > tbody > tr")
+            for item in items:
+                link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+                data.append(
+                    [
+                        item.find_element(By.CSS_SELECTOR, "a").text.strip(),
+                        com,
+                        "UK",
+                        link,
+                    ]
+                )
+                
+            try:
+                curr_button = int(driver.find_element(By.CSS_SELECTOR, '.pagination li.active a').text.strip())
+                next_button = driver.find_element(By.CSS_SELECTOR, f'.pagination li a[title="Page {curr_button+1}"]')
+                driver.execute_script("arguments[0].scrollIntoView();", next_button)
+                driver.execute_script("arguments[0].click();", next_button)
+                time.sleep(4)
+            except Exception:
+                flag = False
+                print("No More Jobs")
 
     driver.quit()
 
