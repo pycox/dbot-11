@@ -5,9 +5,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 252
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -15,12 +14,20 @@ def main():
 
     time.sleep(4)
 
-    countries = driver.find_elements(By.CSS_SELECTOR, "div.positions--country")
     data = []
+    regions = []
+    
+    if "UK" in locations:
+        regions.extend(['London', 'United Kingdom', 'UK'])
 
+    if "US" in locations:
+        regions.extend(['New York', 'San Francisco', 'United States', 'USA', 'US'])
+
+
+    countries = driver.find_elements(By.CSS_SELECTOR, "div.positions--country")
     for country in countries:
         country_name = country.find_element(By.CSS_SELECTOR, "h2").text.strip()
-        if country_name in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
+        if country_name in regions:
 
             items = country.find_elements(By.CSS_SELECTOR, "div.positions-items > div.positions--card")
             for item in items:
