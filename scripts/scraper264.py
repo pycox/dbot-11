@@ -5,22 +5,24 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 264
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
+    time.sleep(4)
 
     flag = True
     while flag:
-      try:
-        time.sleep(4)
-        driver.find_element(By.CSS_SELECTOR, "div.mt-10.flex.justify-center > button").click()
-      except:
-        flag = False
-        print("No more Load Button")
+        try:
+            button = driver.find_element(By.CSS_SELECTOR, "#roles-archive > div.min-h-\[300px\] > div > div > div:nth-child(2) > div.mt-10.flex.justify-center.sm\:mt-20 > button")
+            driver.execute_script("arguments[0].scrollIntoView();", button)
+            driver.execute_script("arguments[0].click();", button)
+            time.sleep(4)
+        except Exception:
+            flag = False
+            print("No more Load Button")
 
     time.sleep(4)
     items = driver.find_elements(By.CSS_SELECTOR, "div.grid.grid-cols-1.gap-6 > a")
@@ -30,7 +32,7 @@ def main():
         link = item.get_attribute("href").strip()
         location = item.find_element(By.CSS_SELECTOR, 'span.body-small.body-bold.text-grey-secondary').text.strip()
 
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
+        for str in locations:
             if (str in location):
                 data.append(
                     [
