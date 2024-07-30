@@ -1,13 +1,12 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import Select
 from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 277
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -15,24 +14,41 @@ def main():
 
     time.sleep(4)
 
-    # items = driver.find_elements(By.CSS_SELECTOR, "div.listing-results > article")
+    try:
+        driver.find_element(By.CSS_SELECTOR, 'button[aria-label="Accept"]').click()
+    except:
+        print("No Cookie Button")
+
+    time.sleep(4)
 
     data = []
+    
+    flag = True
+    while flag:
+        time.sleep(4)
+        try:
+            driver.find_element(By.CSS_SELECTOR, "button.facetwp-load-more").click()
+        except Exception:
+            flag = False
+    
+    items = driver.find_elements(By.CSS_SELECTOR, "article.careers")
+    for item in items:
+        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+        location = driver.execute_script("return arguments[0].innerText;", item.find_element(By.CSS_SELECTOR, ".location dd"))
+        for str in locations:
+            if (str in location):
+                data.append(
+                    [
+                        driver.execute_script("return arguments[0].innerText;", item.find_element(By.CSS_SELECTOR, "h2")).strip(),
+                        com,
+                        location,
+                        link,
+                    ]
+                )
+                break
 
-    # for item in items:
-    #     link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-
-    #     data.append(
-    #         [
-    #             item.find_element(By.CSS_SELECTOR, "h2").text.strip(),
-    #             com,
-    #             "United Kingdom",
-    #             link,
-    #         ]
-    #     )
 
     driver.quit()
-
     updateDB(key, data)
 
 
