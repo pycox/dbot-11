@@ -1,13 +1,14 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 281
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -15,25 +16,27 @@ def main():
 
     time.sleep(4)
 
-    # items = driver.find_elements(By.CSS_SELECTOR, "section.level-0 > div.opening")
 
     data = []
 
-    # for item in items:
-    #     link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-    #     location = item.find_element(By.CSS_SELECTOR, 'span.location').text.strip()
-
-    #     for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US', 'GB']:
-    #         if (str in location):
-    #             data.append(
-    #                 [
-    #                     item.find_element(By.CSS_SELECTOR, "a").text.strip(),
-    #                     com,
-    #                     location,
-    #                     link,
-    #                 ]
-    #             )
-    #             break
+    iframe = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "grnhse_iframe")))
+    driver.switch_to.frame(iframe)
+    
+    items = driver.find_elements(By.CSS_SELECTOR, "section.level-0 > div.opening")
+    for item in items:
+        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+        location = item.find_element(By.CSS_SELECTOR, 'span.location').text.strip()
+        for str in locations:
+            if (str in location):
+                data.append(
+                    [
+                        item.find_element(By.CSS_SELECTOR, "a").text.strip(),
+                        com,
+                        location,
+                        link,
+                    ]
+                )
+                break
 
     driver.quit()
 
