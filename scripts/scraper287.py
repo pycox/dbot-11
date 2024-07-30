@@ -1,13 +1,13 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import Select
 from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 287
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -15,30 +15,17 @@ def main():
 
     time.sleep(4)
 
-    try:
-      button = driver.find_element(By.CSS_SELECTOR, "a[aria-label='See all vacancies']")
-      if button:
-        driver.execute_script("arguments[0].click();", button)
-    except:
-      print("No Listing Page")
-
-    time.sleep(4)
-    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-    time.sleep(4)
-
-    items = driver.find_elements(By.CSS_SELECTOR, "div.ds-grid__col > div > ul > li")
-
     data = []
 
+    items = driver.find_elements(By.CSS_SELECTOR, "a.opportunity")
     for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, 'div.ds-grid__col:nth-child(3) > button').text.strip()
-
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
+        link = item.get_attribute("href").strip()
+        location = driver.execute_script("return arguments[0].innerText;", item.find_element(By.CSS_SELECTOR, ".opportunity-location"))
+        for str in locations:
             if (str in location):
                 data.append(
                     [
-                        item.find_element(By.CSS_SELECTOR, "span").text.strip(),
+                        driver.execute_script("return arguments[0].innerText;", item.find_element(By.CSS_SELECTOR, ".opportunity-title")),
                         com,
                         location,
                         link,
@@ -47,7 +34,6 @@ def main():
                 break
 
     driver.quit()
-
     updateDB(key, data)
 
 
