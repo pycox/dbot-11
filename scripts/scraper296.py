@@ -6,9 +6,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 296
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -18,30 +17,28 @@ def main():
 
     data = []
     
-    flag = True
 
-    while flag:
-        items = driver.find_elements(By.CSS_SELECTOR, ".article-list .article-body")
-        for item in items:
-            link = item.find_element(By.CSS_SELECTOR, "div.readmore a").get_attribute("href").strip()
-            location = item.find_element(By.CSS_SELECTOR, ".field-entry.location .field-value").text.strip()
-            if location in ["Homburg, Germany"]:
-                continue
-            data.append(
-                [
-                    item.find_element(By.CSS_SELECTOR, ".article-header h2 a").text.strip(),
-                    com,
-                    location,
-                    link,
-                ]
-            )
+    if "UK" in locations:
+        flag = True
+        while flag:
+            items = driver.find_elements(By.CSS_SELECTOR, ".article-list .article-body")
+            for item in items:
+                link = item.find_element(By.CSS_SELECTOR, "div.readmore a").get_attribute("href").strip()
+                data.append(
+                    [
+                        item.find_element(By.CSS_SELECTOR, ".article-header h2 a").text.strip(),
+                        com,
+                        "UK",
+                        link,
+                    ]
+                )
 
-        try:
-            driver.find_element(By.CSS_SELECTOR, 'a.page-link.next').click()
-            time.sleep(4)
-        except:
-            flag = False
-            print("No More Jobs")
+            try:
+                driver.find_element(By.CSS_SELECTOR, 'a.page-link.next').click()
+                time.sleep(4)
+            except:
+                flag = False
+                print("No More Jobs")
 
     driver.quit()
     updateDB(key, data)
