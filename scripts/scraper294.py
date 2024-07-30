@@ -6,9 +6,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 294
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -24,8 +23,12 @@ def main():
     time.sleep(4)
 
     data = []
+    regions = []
     
-    for location in ["Winchester", "London", "Edinburgh"]:
+    if "UK" in locations:
+        regions.extend(["Winchester", "London", "Edinburgh"])
+    
+    for location in regions:
         Select(driver.find_element(By.CSS_SELECTOR, "select#locationsDropdown")).select_by_value(location)
         time.sleep(4)
         flag = True
