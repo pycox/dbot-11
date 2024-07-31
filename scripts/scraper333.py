@@ -6,41 +6,46 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 333
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    time.sleep(4)
+    time.sleep(2)
 
     try:
-        driver.find_element(By.CSS_SELECTOR, 'button.cky-btn.cky-btn-reject').click()
+        driver.find_element(By.CSS_SELECTOR, 'button#ccc-recommended-settings').click()
     except:
         print("No Cookie Button")
 
-    time.sleep(4)
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+    time.sleep(2)
 
     data = []
     
-    items = driver.find_elements(By.CSS_SELECTOR, ".job-details")
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, "p").text.strip()
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
-            if (str in location):
-                data.append(
-                    [
-                        item.find_element(By.CSS_SELECTOR, "h2").text.strip(),
-                        com,
-                        location,
-                        link,
-                    ]
-                )
-                break
-
+    if "UK" in locations:
+        flag = True
+        while flag:
+            time.sleep(4)
+            try:
+                driver.find_element(By.CSS_SELECTOR, "button#tile-more-results").click()
+            except Exception:
+                flag = False
+    
+        items = driver.find_elements(By.CSS_SELECTOR, ".job-tile-cell")
+        for item in items:
+            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+            data.append(
+                [
+                    item.find_element(By.CSS_SELECTOR, "a").text.strip(),
+                    com,
+                    "United Kingdom",
+                    link,
+                ]
+            )
 
     driver.quit()
     updateDB(key, data)
