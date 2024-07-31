@@ -6,49 +6,29 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 335
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    time.sleep(4)
-
-    try:
-        driver.find_element(By.CSS_SELECTOR, 'button#didomi-notice-disagree-button').click()
-    except:
-        print("No Cookie Button")
+    time.sleep(2)
 
     data = []
     
-    for location, location_code in [("London", 2862), ("UK", 3033)]:
-        driver.get(f"{url}?facet_JobCountry={location_code}")
-        time.sleep(4)
-        flag = True
-        while flag:
-            items = driver.find_elements(By.CSS_SELECTOR, ".ts-offer-card")
-            for item in items:
-                link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-                data.append(
-                    [
-                        item.find_element(By.CSS_SELECTOR, "h3").text.strip(),
-                        com,
-                        location,
-                        link,
-                    ]
-                )
-
-            try:
-                driver.find_element(By.CSS_SELECTOR, 'a[title="Next page of results"]').click()
-                time.sleep(4)
-            except:
-                flag = False
-
-        driver.get(f"{url}?facet_JobCountry=-{location_code}")
-        time.sleep(4)
-
+    if "UK" in locations:
+        items = driver.find_elements(By.CSS_SELECTOR, "#jobs-section a.sc-4226180-1.tDrtJ")
+        for item in items:
+            link = item.get_attribute("href").strip()
+            data.append(
+                [
+                    item.text.strip(),
+                    com,
+                    "United Kingdom",
+                    link,
+                ]
+            )
 
     driver.quit()
     updateDB(key, data)
