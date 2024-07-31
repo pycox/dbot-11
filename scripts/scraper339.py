@@ -6,9 +6,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 339
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -35,16 +34,15 @@ def main():
             flag = False
             print("No more page")
     
-    items = driver.find_elements(By.CSS_SELECTOR, "li.block-job-search__result")
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, ".block-job-search__result-location div").text.strip()
-        if location in ["Birmingham", "Buckinghamshire", "London", "Newcastle upon Tyne", "Oxfordshire", "West Midlands", "Wiltshire", "Yorkshire", "Salisbury", "Bristol", "Glasgow", "East Sussex"]:
+    if "UK" in locations:
+        items = driver.find_elements(By.CSS_SELECTOR, "li.block-job-search__result")
+        for item in items:
+            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
             data.append(
                 [
                     item.find_element(By.CSS_SELECTOR, ".block-job-search__result-title").text.strip(),
                     com,
-                    f"{location}, UK",
+                    "UK",
                     link,
                 ]
             )
