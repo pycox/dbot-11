@@ -6,9 +6,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 330
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -16,24 +15,17 @@ def main():
 
     time.sleep(4)
 
-    try:
-        driver.find_element(By.CSS_SELECTOR, "button[data-action='click->common--cookies--alert#disableAll']").click()
-    except:
-        print("No Cookie Button")
-
-    time.sleep(4)
-
     data = []
     
-    items = driver.find_elements(By.CSS_SELECTOR, "#jobs_list_container li")
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, ".mt-1.text-md span:nth-child(3)").text.strip()
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
+    items = driver.find_elements(By.CSS_SELECTOR, ".e-flex.e-con-boxed.e-con.e-parent.nitro-offscreen")
+    for item in items[:-2]:
+        link = item.find_element(By.CSS_SELECTOR, "a.elementor-button.elementor-button-link.elementor-size-sm").get_attribute("href").strip()
+        location = item.find_element(By.CSS_SELECTOR, ".elementor-widget-container").text.split("\n")[-1].split("–")[-1].strip()
+        for str in locations:
             if (str in location):
                 data.append(
                     [
-                        item.find_element(By.CSS_SELECTOR, "a span").text.strip(),
+                        item.find_element(By.CSS_SELECTOR, "h3").text.strip(),
                         com,
                         location,
                         link,
@@ -43,7 +35,6 @@ def main():
 
     driver.quit()
     updateDB(key, data)
-
 
 if __name__ == "__main__":
     main()
