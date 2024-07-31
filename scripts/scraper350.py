@@ -6,33 +6,30 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 350
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    time.sleep(6)
+    time.sleep(4)
 
     data = []
     
-    items = driver.find_elements(By.CSS_SELECTOR, 'li.b--careers-list-a__list-item')
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, '.b--careers-list-a__list-item__link__item-right').text.strip()
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
-            if (str in location):
-                data.append(
-                    [
-                        item.find_element(By.CSS_SELECTOR, ".b--careers-list-a__list-item__link__item-left").text.strip(),
-                        com,
-                        location,
-                        link,
-                    ]
-                )
-                break
+    if "UK" in locations:
+        items = driver.find_elements(By.CSS_SELECTOR, "li.modal-item.big-modal-item.clearfix")
+        for item in items:
+            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+            data.append(
+                [
+                    item.find_element(By.CSS_SELECTOR, ".modal-item-title").text.strip(),
+                    com,
+                    "UK",
+                    link,
+                ]
+            )
+
 
     driver.quit()
     updateDB(key, data)
