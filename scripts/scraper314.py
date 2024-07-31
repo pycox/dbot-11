@@ -6,9 +6,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 314
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -16,36 +15,20 @@ def main():
 
     time.sleep(4)
 
-    try:
-        driver.find_element(By.CSS_SELECTOR, "button#onetrust-accept-btn-handler").click()
-    except:
-        print("No Cookie Button")
-
-    time.sleep(4)
-
     data = []
     
-    flag = True
-    while flag:
-        items = driver.find_elements(By.CSS_SELECTOR, ".attrax-list-widget__list.attrax-list-widget__list--list.attrax-list-widget__list--has-items .attrax-vacancy-tile")
+    if "UK" in locations:
+        items = driver.find_elements(By.CSS_SELECTOR, "li.stm_careers.type-stm_careers.status-publish.hentry")
         for item in items:
-            link = item.find_element(By.CSS_SELECTOR, "a[aria-label='Apply now']").get_attribute("href").strip()
-            location = item.find_element(By.CSS_SELECTOR, ".attrax-vacancy-tile__option-location-valueset").text.strip()
+            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
             data.append(
                 [
-                    item.find_element(By.CSS_SELECTOR, "a.attrax-vacancy-tile__title").text.strip(),
+                    item.find_element(By.CSS_SELECTOR, "a").text.strip(),
                     com,
-                    f"{location}, United Kingdom",
+                    "United Kingdom",
                     link,
                 ]
             )
-
-        try:
-            driver.find_element(By.CSS_SELECTOR, 'main#main-site-main-content div.cop-widget.dynamic-widget.attrax-list-pagination-widget.job-results__top-pagination.list-data-pagination-widget > div.attrax-pagination__pagination > ul > li.attrax-pagination__next > a').click()
-            time.sleep(4)
-        except:
-            flag = False
-            print("No More Jobs")
 
 
     driver.quit()
