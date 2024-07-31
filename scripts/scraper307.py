@@ -6,9 +6,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 307
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -28,7 +27,7 @@ def main():
                 location = item.find_element(By.CSS_SELECTOR, ".css-248241 .css-129m7dg").text.strip()
             except:
                 continue
-            for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
+            for str in locations:
                 if (str in location):
                     data.append(
                         [
