@@ -6,9 +6,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 329
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -17,22 +16,36 @@ def main():
     time.sleep(4)
 
     data = []
-    
-    items = driver.find_elements(By.CSS_SELECTOR, ".opening")
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, ".location").text.strip()
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
-            if (str in location):
-                data.append(
-                    [
-                        item.find_element(By.CSS_SELECTOR, "a").text.strip(),
-                        com,
-                        location,
-                        link,
-                    ]
-                )
-                break
+
+    flag = True
+    while flag:
+        items = driver.find_elements(By.CSS_SELECTOR, "tr.job-post")
+        for item in items:
+            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+            location = item.find_element(By.CSS_SELECTOR, ".body.body__secondary.body--metadata").text.strip()
+            for str in locations:
+                if (str in location):
+                    data.append(
+                        [
+                            item.find_element(By.CSS_SELECTOR, "a").text.strip(),
+                            com,
+                            location,
+                            link,
+                        ]
+                    )
+                    break
+
+        try:
+            button = driver.find_element(By.CSS_SELECTOR, 'button[aria-label="Next page"]')
+            if button.get_attribute("aria-disabled") == "true":
+                flag = False
+            else:
+                driver.execute_script("arguments[0].scrollIntoView();", button)
+                driver.execute_script("arguments[0].click();", button)
+            time.sleep(4)
+        except Exception as e:
+            flag = False
+            print("No More Jobs", e)
 
     driver.quit()
     updateDB(key, data)
