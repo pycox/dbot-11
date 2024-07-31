@@ -6,9 +6,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 310
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -22,9 +21,8 @@ def main():
     for item in items:
         link = item.find_element(By.CSS_SELECTOR, "a.job-entry__link").get_attribute("href").strip()
         location = item.find_element(By.CSS_SELECTOR, ".job-entry__info .job-entry__meta.job-location").text.strip()
-        location_ = location.lower()
-        for str in ['london', 'new york', 'san francisco', 'united states', 'united Kingdom', 'uk', 'usa', 'us']:
-            if (str in location_):
+        for str in locations:
+            if (str in location):
                 data.append(
                     [
                         item.find_element(By.CSS_SELECTOR, ".job-entry__title").text.strip(),
