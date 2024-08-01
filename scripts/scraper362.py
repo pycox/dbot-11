@@ -6,32 +6,26 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 362
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    time.sleep(2)
-
-    try:
-        driver.find_element(By.CSS_SELECTOR, 'button#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll').click()
-    except:
-        print("No Cookie Button")
+    time.sleep(4)
 
     data = []
     
-    items = driver.find_elements(By.CSS_SELECTOR, ".CareersSearch_role__M1ysi")
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, "p:nth-child(3)").text.strip()
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
+    items = driver.find_elements(By.CSS_SELECTOR, ".srJobList tr")
+    for item in items[1:]:
+        link = item.get_attribute("onclick").strip()[13:-3]
+        location = item.find_element(By.CSS_SELECTOR, ".srJobListLocation").text.strip()
+        for str in locations:
             if (str in location):
                 data.append(
                     [
-                        item.find_element(By.CSS_SELECTOR, "h4").text.strip(),
+                        item.find_element(By.CSS_SELECTOR, ".srJobListJobTitle").text.strip(),
                         com,
                         location,
                         link,
