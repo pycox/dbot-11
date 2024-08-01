@@ -6,33 +6,28 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 353
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
     time.sleep(4)
-    driver.execute_script("arguments[0].scrollIntoView();", driver.find_element(By.CSS_SELECTOR, ".search-container"))
-    time.sleep(4)
 
     data = []
     
     flag = True
     while flag:
-        items = driver.find_elements(By.CSS_SELECTOR, ".job-tile-lists .job")
+        items = driver.find_elements(By.CSS_SELECTOR, "#search > div > div > ul > li")
         for item in items:
-            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-            location = item.find_element(By.CSS_SELECTOR, "ul li:nth-child(1)").text.strip()
-            for str in [
-                'London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US'
-            ]:
+            link = item.find_element(By.CSS_SELECTOR, "h3 a").get_attribute("href").strip()
+            location = item.find_element(By.CSS_SELECTOR, "div[data-test-component=\"StencilText\"]").text.strip()
+            for str in locations:
                 if (str in location):
                     data.append(
                         [
-                            item.find_element(By.CSS_SELECTOR, "a").text.strip(),
+                            item.find_element(By.CSS_SELECTOR, "h3").text.strip(),
                             com,
                             location,
                             link,
