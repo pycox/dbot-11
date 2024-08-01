@@ -6,9 +6,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 351
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -25,27 +24,29 @@ def main():
 
     data = []
     
-    flag = True
-    while flag:
-        items = driver.find_elements(By.CSS_SELECTOR, ".attrax-list-widget__list.attrax-list-widget__list--list.attrax-list-widget__list--has-items .attrax-vacancy-tile")
-        for item in items:
-            link = item.find_element(By.CSS_SELECTOR, "a[aria-label='Apply now']").get_attribute("href").strip()
-            location = item.find_element(By.CSS_SELECTOR, ".attrax-vacancy-tile__option-location-valueset").text.strip()
-            data.append(
-                [
-                    item.find_element(By.CSS_SELECTOR, "a.attrax-vacancy-tile__title").text.strip(),
-                    com,
-                    f"{location}, United Kingdom",
-                    link,
-                ]
-            )
+    if "UK" in locations:
+        flag = True
+        while flag:
+            items = driver.find_elements(By.CSS_SELECTOR, ".attrax-list-widget__list.attrax-list-widget__list--list.attrax-list-widget__list--has-items .attrax-vacancy-tile")
+            for item in items:
+                link = item.find_element(By.CSS_SELECTOR, "a[aria-label='Apply now']").get_attribute("href").strip()
+                data.append(
+                    [
+                        item.find_element(By.CSS_SELECTOR, "a.attrax-vacancy-tile__title").text.strip(),
+                        com,
+                        "UK",
+                        link,
+                    ]
+                )
 
-        try:
-            driver.find_element(By.CSS_SELECTOR, 'main#main-site-main-content div.cop-widget.dynamic-widget.attrax-list-pagination-widget.job-results__top-pagination.list-data-pagination-widget > div.attrax-pagination__pagination > ul > li.attrax-pagination__next > a').click()
-            time.sleep(4)
-        except:
-            flag = False
-            print("No More Jobs")
+            try:
+                button = driver.find_element(By.CSS_SELECTOR, 'a[aria-label="Next pagination page"]')
+                driver.execute_script("arguments[0].scrollIntoView();", button)
+                driver.execute_script("arguments[0].click();", button)
+                time.sleep(4)
+            except:
+                flag = False
+                print("No More Jobs")
 
 
     driver.quit()
