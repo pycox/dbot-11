@@ -8,15 +8,14 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 354
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    time.sleep(4)
+    time.sleep(6)
 
     try:
         driver.find_element(By.CSS_SELECTOR, 'button#onetrust-accept-btn-handler').click()
@@ -35,12 +34,12 @@ def main():
     items = driver.find_elements(By.CSS_SELECTOR, ".hpanel.filter-item")
     for item in items:
         link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, "p").text.strip()
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
+        location = item.find_element(By.CSS_SELECTOR, "p.small").text.strip()
+        for str in locations:
             if (str in location):
                 data.append(
                     [
-                        item.find_element(By.CSS_SELECTOR, "h5").text.strip(),
+                        item.find_element(By.CSS_SELECTOR, "h5.m-b-xs").text.strip(),
                         com,
                         location,
                         link,
