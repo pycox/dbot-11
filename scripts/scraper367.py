@@ -6,30 +6,33 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 367
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
-    driver.get(url)
-
-    time.sleep(4)
     
     data = []
+    regions = []
     
-    flag = True
+    if "UK" in locations:
+        regions.append(("29247e57dbaf46fb855b224e03170bc7", "UK"))
+    
+    if "US" in locations:
+        regions.append(("bc33aa3152ec42d4995f4791a106ed09", "US"))
+    
+    for location_id, location in regions:
+        driver.get(f"{url}?locationCountry={location_id}")
+        time.sleep(6)
 
-    while flag:
-        items = driver.find_elements(By.CSS_SELECTOR, "li.css-1q2dra3")
-        for item in items:
-            link = item.find_element(By.CSS_SELECTOR, "h3 a").get_attribute("href").strip()
-            try:
-                location = item.find_element(By.CSS_SELECTOR, "div[data-automation-id='locations'] dd").text.strip()
-            except:
-                continue
-            for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
-                if (str in location):
+        flag = True
+        while flag:
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(4)
+            items = driver.find_elements(By.CSS_SELECTOR, "li.css-1q2dra3")
+            for item in items:
+                try:
+                    link = item.find_element(By.CSS_SELECTOR, "h3 a").get_attribute("href").strip()
                     data.append(
                         [
                             item.find_element(By.CSS_SELECTOR, "h3").text.strip(),
@@ -38,14 +41,14 @@ def main():
                             link,
                         ]
                     )
-                    break
+                except:
+                    continue
 
-        try:
-            driver.find_element(By.CSS_SELECTOR, 'button[aria-label="next"]').click()
-            time.sleep(4)
-        except:
-            flag = False
-            print("No More Jobs")
+            try:
+                driver.find_element(By.CSS_SELECTOR, 'button[aria-label="next"]').click()
+            except:
+                flag = False
+                print("No More Jobs")
 
     driver.quit()
     updateDB(key, data)
