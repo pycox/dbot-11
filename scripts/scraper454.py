@@ -6,38 +6,27 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 454
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    time.sleep(2)
-
-    try:
-        driver.find_element(By.CSS_SELECTOR, 'button#onetrust-accept-btn-handler').click()
-    except:
-        print("No Cookie Button")
-
-    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-    time.sleep(4)
-
-    data = []
+    time.sleep(8)
     
-    items = driver.find_elements(By.CSS_SELECTOR, "article.js--careers-card")
+    data = []
+
+    items = driver.find_elements(By.CSS_SELECTOR, "careers-ui-job-listing-list-item")
     for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, ".js--career-location").text.strip()
-        for str in ['England', 'London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
+        location = item.find_elements(By.CSS_SELECTOR, ".btt.initialized")[1].text.split("·")[1].strip()
+        for str in locations:
             if (str in location):
                 data.append(
                     [
-                        item.find_element(By.CSS_SELECTOR, "h2").text.strip(),
+                        item.find_element(By.CSS_SELECTOR, "b-truncate-tooltip").text.strip(),
                         com,
                         location,
-                        link,
+                        url,
                     ]
                 )
                 break
