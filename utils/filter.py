@@ -74,7 +74,7 @@ def filterUrls():
     if ws["D1"].value != "yes":
         return urls
     
-    for row in ws.iter_rows(min_row=2, max_row=450):
+    for row in ws.iter_rows(min_row=2, max_row=460):
     # for row in ws.iter_rows(min_row=1):
 
         if row[0].value == "ID" or row[0].value is None:
@@ -128,6 +128,9 @@ def updateHistory(key, val):
 
     data = readHistory()
     data[f"{key}"] = val
+
+    if not isinstance(data, dict):
+        return
 
     with open(histDir, "w") as file:
         try:
