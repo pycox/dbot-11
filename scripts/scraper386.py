@@ -6,9 +6,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 386
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -17,33 +16,23 @@ def main():
     time.sleep(4)
 
     try:
-        driver.find_element(By.CSS_SELECTOR, 'button#truste-consent-required').click()
+        driver.find_element(By.CSS_SELECTOR, 'body > div.cookie-banner > div.fs-cc-banner3_component > div > div.fs-cc-banner3_buttons-wrapper > a:nth-child(2)').click()
     except:
         print("No Cookie Button")
 
-    driver.execute_script("arguments[0].scrollIntoView();", driver.find_element(By.CSS_SELECTOR, ".filters-bottom"))
-    
     time.sleep(4)
 
     data = []
     
-    flag = True
-    while flag:
-        time.sleep(4)
-        try:
-            driver.find_element(By.CSS_SELECTOR, 'a[aria-label="Load More about jobs"]').click()
-        except Exception:
-            flag = False
-    
-    items = driver.find_elements(By.CSS_SELECTOR, "a.table-tr")
+    items = driver.find_elements(By.CSS_SELECTOR, ".jobs-list .job")
     for item in items:
-        link = item.get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, "div:nth-child(3)").text.strip()
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
+        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+        location = item.find_element(By.CSS_SELECTOR, "p.tags span").text.strip()
+        for str in locations:
             if (str in location):
                 data.append(
                     [
-                        item.find_element(By.CSS_SELECTOR, ".table-title div").text.strip(),
+                        item.find_element(By.CSS_SELECTOR, "h2").text.strip(),
                         com,
                         location,
                         link,
