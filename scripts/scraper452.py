@@ -1,13 +1,12 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import Select
 from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 452
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -15,27 +14,26 @@ def main():
 
     time.sleep(4)
 
-    items = driver.find_elements(By.CSS_SELECTOR, ".css-1fquksq.e9up25i0")
-    url_ = url.split("#")[0]
-    data = []
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
-    for item in items:
-        job_id = item.find_element(By.CSS_SELECTOR, "button").get_attribute("id").strip()
-        link = f"{url_}#{job_id}"
-        location = item.find_element(By.CSS_SELECTOR, '.css-11lck9.e9up25i5').text.strip()
-        for str in ['LONDON', 'NEW YORK', 'SAN FRANCISCO', 'UNITED STATES', 'UNITED KINGDOM', 'UK', 'USA', 'US']:
-            if (str in location):
-                data.append(
-                    [
-                        item.find_element(By.CSS_SELECTOR, ".css-1wh1a53.e9up25i6").text.strip(),
-                        com,
-                        location,
-                        link,
-                    ]
-                )
+    time.sleep(4)
+
+    data = []
+    
+    if "UK" in locations:
+        items = driver.find_elements(By.CSS_SELECTOR, "article.post.type-post")
+        for item in items:
+            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+            data.append(
+                [
+                    driver.execute_script("return arguments[0].innerText;", item.find_element(By.CSS_SELECTOR, "h4")),
+                    com,
+                    "UK",
+                    link,
+                ]
+            )
 
     driver.quit()
-
     updateDB(key, data)
 
 
