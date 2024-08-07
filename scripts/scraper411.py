@@ -6,29 +6,29 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 411
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
-    if url.endswith("/"):
-        url = url[:-1]
     driver.get(url)
 
     time.sleep(4)
 
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+    time.sleep(2)
+
     data = []
     
-    items = driver.find_elements(By.CSS_SELECTOR, ".open-roles .open-role")
+    items = driver.find_elements(By.CSS_SELECTOR, ".postings-group .posting")
     for item in items:
         link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, ".open-role-location").text.strip()
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
+        location = item.find_element(By.CSS_SELECTOR, ".location").text.strip()
+        for str in locations:
             if (str in location):
                 data.append(
                     [
-                        item.find_element(By.CSS_SELECTOR, ".open-role-title").text.strip(),
+                        item.find_element(By.CSS_SELECTOR, "h5").text.strip(),
                         com,
                         location,
                         link,
