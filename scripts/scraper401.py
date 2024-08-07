@@ -6,33 +6,30 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 401
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
     time.sleep(4)
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    time.sleep(4)
 
     data = []
     
-    items = driver.find_elements(By.CSS_SELECTOR, ".job-list a")
-    for item in items:
-        link = item.get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, ".location-info").text.strip()
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
-            if (str in location):
-                data.append(
-                    [
-                        item.find_element(By.CSS_SELECTOR, ".job-title").text.strip(),
-                        com,
-                        location,
-                        link,
-                    ]
-                )
-                break
+    if "UK" in locations:
+        items = driver.find_elements(By.CSS_SELECTOR, "body > div.content-area > div:nth-child(3) > div.wp-block-group.gradient-dbl-tl.gradient-bl.has-space-900-background-color.has-background.is-layout-flow.wp-block-group-is-layout-flow > div.wp-block-custom > div")
+        for item in items:
+            data.append(
+                [
+                    driver.execute_script("return arguments[0].innerText;", item.find_element(By.CSS_SELECTOR, "h3")).strip(),
+                    com,
+                    "UK",
+                    item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip(),
+                ]
+            )
 
     driver.quit()
     updateDB(key, data)
