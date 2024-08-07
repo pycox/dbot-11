@@ -2,36 +2,30 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 428
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
     time.sleep(4)
-
     data = []
-        
-    items = driver.find_elements(By.CSS_SELECTOR, ".downloadTable__tableRow .row.align-items-center")
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = "London"
-        data.append(
-            [
-                item.find_element(By.CSS_SELECTOR, ".col-md-4.col-12").text.strip(),
-                com,
-                location,
-                link,
-            ]
-        )
+
+    if "UK" in locations:
+        items = driver.find_elements(By.CSS_SELECTOR, ".cc-accordion.cc-initialized .cc-accordion-item__title")
+        for item in items:
+            data.append(
+                [
+                    item.text.strip(),
+                    com,
+                    "UK",
+                    url,
+                ]
+            )
 
 
     driver.quit()
