@@ -4,9 +4,8 @@ from selenium.webdriver.chrome.options import Options
 from utils import readUrl, updateDB
 
 
-def main():
-    key = 413
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
