@@ -1,16 +1,11 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import Select
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 420
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -18,32 +13,41 @@ def main():
 
     time.sleep(4)
 
-    data = []
-    
-    driver.find_element(By.CSS_SELECTOR, 'button.acceptAllCookies').click()
-    time.sleep(2)
-    driver.find_element(By.CSS_SELECTOR, '.modal-content button[aria-label="Close"]').click()
-    time.sleep(2)
-    
-    items = driver.find_elements(By.CSS_SELECTOR, ".section__content .section__entry p span a")
-    
-    for item in items:
-        title, location = item.text.replace(">>", "").strip().split("-")
-        link = item.get_attribute("href").strip()
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
-            if (str in location):
-                data.append(
-                    [
-                        title,
-                        com,
-                        location,
-                        link,
-                    ]
-                )
-                break
+    try:
+        driver.find_element(
+            By.CSS_SELECTOR,
+            "button[data-action='click->common--cookies--alert#acceptAll']",
+        ).click()
+    except Exception as e:
+        print(f"Scraper{key} cookie Button: {e}")
 
+    flag = True
+    while flag:
+        time.sleep(4)
+        try:
+            driver.find_element(By.CSS_SELECTOR, "#show_more_button").click()
+        except Exception:
+            flag = False
+
+    items = driver.find_elements(By.CSS_SELECTOR, "li.z-career-job-card-image")
+
+    data = []
+
+    if "UK" in locations:
+        for item in items:
+            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+            title = item.find_element(By.CSS_SELECTOR, "span").text.strip()
+            data.append(
+                [
+                    title,
+                    com,
+                    "UK",
+                    link,
+                ]
+            )
 
     driver.quit()
+
     updateDB(key, data)
 
 
