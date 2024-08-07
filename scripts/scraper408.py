@@ -5,9 +5,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 408
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -15,42 +14,21 @@ def main():
     
     time.sleep(4)
     
-    try:
-        driver.find_element(By.CSS_SELECTOR, 'button#onetrust-accept-btn-handler').click()
-    except Exception as e:
-        print(f'Scraper{key} cookiee button: {e}')
-        
-    flag = True
     data = []
-    
-    while flag:
-        try:
-            time.sleep(4)
             
-            items = driver.find_elements(By.CSS_SELECTOR, "tbody > tr.nx-table-row")
-            
-            for item in items:
-                cols = item.find_elements(By.CSS_SELECTOR, "td")
-                link = item.find_element(By.CSS_SELECTOR, 'a').get_attribute('href')
-                title = cols[0].text.strip()
-                location = cols[3].text.strip()
-                
-                data.append([
-                    title,
-                    com,
-                    location,
-                    f'https://careers.allianz.com{link}'
-                ])
-            
-            nextBtn = driver.find_element(By.CSS_SELECTOR, 'button.nx-pagination__link--next')
 
-            if nextBtn.is_enabled():
-                nextBtn.click()
-            else:
-                flag = False
-        except:
-            flag = False
-            
+    if "UK" in locations:
+        items = driver.find_elements(By.CSS_SELECTOR, ".job-item")
+        for item in items:
+            data.append([
+                item.find_element(By.CSS_SELECTOR, 'h3 a').text.strip(),
+                com,
+                "UK",
+                item.find_element(By.CSS_SELECTOR, 'h3 a').get_attribute('href')
+            ])
+    
+
+    driver.quit()
     updateDB(key, data)
 
 
