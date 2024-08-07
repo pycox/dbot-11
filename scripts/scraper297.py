@@ -38,6 +38,7 @@ def main(key, com, url, locations):
                         link,
                     ]
                 )
+                break
 
     driver.quit()
     updateDB(key, data)
