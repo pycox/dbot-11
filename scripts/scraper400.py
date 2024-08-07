@@ -6,9 +6,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 400
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -18,16 +17,15 @@ def main():
 
     data = []
     
-    items = driver.find_elements(By.CSS_SELECTOR, ".container.py-10.undefined ul li")
+    items = driver.find_elements(By.CSS_SELECTOR, "tr.job-post")
     for item in items:
         link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, ".overline-title").text.strip()
-        location_ = location.lower()
-        for str in ['london', 'new York', 'san francisco', 'united states', 'united kingdom', 'uk', 'usa', 'us']:
-            if (str in location_):
+        location = item.find_element(By.CSS_SELECTOR, ".body.body__secondary.body--metadata").text.strip()
+        for str in locations:
+            if (str in location):
                 data.append(
                     [
-                        item.find_element(By.CSS_SELECTOR, "h4").text.strip(),
+                        item.find_element(By.CSS_SELECTOR, ".body.body--medium").text.strip(),
                         com,
                         location,
                         link,
