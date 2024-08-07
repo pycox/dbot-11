@@ -43,11 +43,11 @@ def getLocations(location):
             "England", "ENGLAND", "Birmingham", "BIRMINGHAM",
             "Cambridge", "CAMBRIDGE", "Manchester", "MANCHESTER",
             "Scotland", "SCOTLAND", "Leeds", "LEEDS", "Belfast",
-            "Liverpool", "Newcastle", "Warrington", "Mayfair", "Ccambridge",
-            "Reading", "Salford", "Twickenham", "Wembley"
+            "Liverpool", "Newcastle", "Warrington", "Mayfair", "Cambridge",
+            "Reading", "Salford", "Twickenham", "Wembley", "Southampton"
         ),
         "US": (
-            "US", "USA", "UNITED STATES", "United States", "New York", 
+            "US", "U.S.", "USA", "UNITED STATES", "United States", "New York", 
             "NEW YORK", "Boston", "BOSTON", "San Francisco", 
             "SAN FRANCISCO", "Washington", "WASHINGTON", 
             "Philadelphia", "PHILADELPHIA", "Stamford", "STAMFORD", 
@@ -55,7 +55,7 @@ def getLocations(location):
             "Chicago", "CHICAGO", "San Diego", "SAN DIEGO", 
             "Denver", "DENVER", "Salt Lake City", "SALT LAKE CITY", 
             "Miami", "MIAMI", "Tampa", "TAMPA", "Orlando", "ORLANDO",
-            "California"
+            "California", "Radnor"
         )
     }
 
@@ -74,7 +74,7 @@ def filterUrls():
     if ws["D1"].value != "yes":
         return urls
     
-    for row in ws.iter_rows(min_row=2, max_row=380):
+    for row in ws.iter_rows(min_row=2, max_row=450):
     # for row in ws.iter_rows(min_row=1):
 
         if row[0].value == "ID" or row[0].value is None:
