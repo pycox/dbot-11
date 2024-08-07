@@ -6,9 +6,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 394
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -16,25 +15,20 @@ def main():
 
     time.sleep(4)
 
-    try:
-        driver.find_element(By.CSS_SELECTOR, 'button#onetrust-accept-btn-handler').click()
-    except:
-        print("No Cookie Button")
-
     data = []
     
-    items = driver.find_elements(By.CSS_SELECTOR, ".w-dyn-list div[role='listitem']")
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = "London"
-        data.append(
-            [
-                item.find_element(By.CSS_SELECTOR, "h4").text.strip(),
-                com,
-                location,
-                link,
-            ]
-        )
+    if "US" in locations:
+        items = driver.find_elements(By.CSS_SELECTOR, "#Opportunities .opportunity h3 a")
+        for item in items:
+            link = item.get_attribute("href").strip()
+            data.append(
+                [
+                    item.text.strip(),
+                    com,
+                    "US",
+                    link,
+                ]
+            )
 
     driver.quit()
     updateDB(key, data)
