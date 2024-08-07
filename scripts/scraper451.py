@@ -1,13 +1,12 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import Select
 from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 451
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -15,26 +14,31 @@ def main():
 
     time.sleep(4)
 
-    items = driver.find_elements(By.CSS_SELECTOR, "div.job-vacancy")
+    try:
+        driver.find_element(By.CSS_SELECTOR, 'button#hs-eu-decline-button').click()
+    except:
+        print("No Cookie Button")
+
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+    time.sleep(4)
 
     data = []
-
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "div.job-vacancy__apply > a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, 'div.job-vacancy__table > div:nth-child(3)').text.strip()
-        location = location.replace("Location:", "").strip()
-
-        data.append(
-            [
-                item.find_element(By.CSS_SELECTOR, "div.job-vacancy__title").text.strip(),
-                com,
-                location,
-                link,
-            ]
-        )
+    
+    if "UK" in locations:
+        items = driver.find_elements(By.CSS_SELECTOR, "a.career__listing")
+        for item in items:
+            link = item.get_attribute("href").strip()
+            data.append(
+                [
+                    item.find_element(By.CSS_SELECTOR, ".career__listing--title").text.strip(),
+                    com,
+                    "UK",
+                    link,
+                ]
+            )
 
     driver.quit()
-
     updateDB(key, data)
 
 
