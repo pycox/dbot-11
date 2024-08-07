@@ -5,9 +5,7 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 438
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -18,44 +16,37 @@ def main():
 
     time.sleep(4)
     try:
-        driver.find_element(By.CSS_SELECTOR, 'button#CybotCookiebotDialogBodyButtonDecline').click()
+        driver.find_element(By.CSS_SELECTOR, '#cookie-accept').click()
     except:
         print("No Cookie Button")
 
     while flag:
         time.sleep(4)
-        items = driver.find_elements(By.CSS_SELECTOR, ".careers-featured-cards")
-        for item in items:
-            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-            location = item.find_element(By.CSS_SELECTOR, '.career-featured-card-location').text.strip()
-            if location in ["New York"]:
-                location = f"{location}, US"
-            elif location in [
-                "Belfast", "Birmingham", "Bournemouth", "Bristol", "Channel Islands", "Cheltenham", "Edinburgh",
-                "Exeter", "Glasgow", "Guernsey", "Jersey", "Leeds", "Liverpool", "Manchester", "Reading", "Reigate",
-                "Sheffield", 
-            ]:
-                location = f"{location}, UK"
-            elif any(substring in location for substring in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']):
-                pass
-            else:
-                continue
-            data.append(
-                [
-                    item.find_element(By.CSS_SELECTOR, "h3").text.strip(),
-                    com,
-                    location,
-                    link,
-                ]
-            )
-
         try:
-          driver.find_element(By.CSS_SELECTOR, "a.px-4.py-2.border.bg-white.leading-2").click()
-          time.sleep(4)
+            last_height = driver.execute_script("return document.body.scrollHeight")
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(2)
+            new_height = driver.execute_script("return document.body.scrollHeight")
+            if new_height == last_height:
+                flag = False
         except:
-          flag = False
-          print("No More Jobs")
+            flag = False
 
+    items = driver.find_elements(By.CSS_SELECTOR, ".job-tile-cell")
+    for item in items:
+        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+        location = item.find_element(By.CSS_SELECTOR, '.location div').text.strip()
+        for str in locations:
+            if (str in location):
+                data.append(
+                    [
+                        item.find_element(By.CSS_SELECTOR, "a").text.strip(),
+                        com,
+                        location,
+                        link,
+                    ]
+                )
+                break
 
     driver.quit()
 
