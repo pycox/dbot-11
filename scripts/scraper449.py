@@ -22,7 +22,7 @@ def main(key, com, url, locations):
     time.sleep(4)
 
     data = []
-    
+     
     items = driver.find_elements(By.CSS_SELECTOR, ".grid-row.ng-star-inserted a.group")
     for item in items:
         link = item.get_attribute("href").strip()
