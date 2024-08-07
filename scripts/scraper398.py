@@ -6,40 +6,36 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 398
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
-    driver.get(url)
+    
+    regions = []
 
-    time.sleep(4)
+    if "UK" in locations:
+        regions.append(("UK", "gb"))
 
-    try:
-        driver.find_element(By.CSS_SELECTOR, 'button[data-action="click->common--cookies--alert#disableAll"]').click()
-    except:
-        print("No Cookie Button")
-
-    time.sleep(4)
-
+    if "US" in locations:
+        regions.append("US", "us")
+        
     data = []
 
-    items = driver.find_elements(By.CSS_SELECTOR, "#jobs_list_container .block-grid-item")
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, ".mt-1.text-md span:nth-child(1)").text.strip()
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
-            if (str in location):
-                data.append(
-                    [
-                        item.find_element(By.CSS_SELECTOR, ".text-block-base-link.company-link-style").text.strip(),
-                        com,
-                        location,
-                        link,
-                    ]
-                )
-                break
+    for location, location_code in regions:
+        driver.get(f"{url}&country={location_code}")
+        time.sleep(4)
+        items = driver.find_elements(By.CSS_SELECTOR, ".p-view-jobsearchresults .p-panel.p-p-b-md a[data-tag=\"displayJobTitle\"]")
+        for item in items:
+            link = item.get_attribute("href").strip()
+            data.append(
+                [
+                    item.text.strip(),
+                    com,
+                    location,
+                    link,
+                ]
+            )
 
     driver.quit()
     updateDB(key, data)
