@@ -6,9 +6,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 435
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -17,7 +16,7 @@ def main():
     time.sleep(4)
 
     try:
-        driver.find_element(By.CSS_SELECTOR, 'button.gdprcookie-acceptallbutton').click()
+        driver.find_element(By.CSS_SELECTOR, '#onetrust-accept-btn-handler').click()
     except:
         print("No Cookie Button")
 
@@ -27,28 +26,28 @@ def main():
     
     flag = True
     while flag:
-        items = driver.find_elements(By.CSS_SELECTOR, ".ListGridContainer .rowContainerHolder")
+        items = driver.find_elements(By.CSS_SELECTOR, "#results article")
         for item in items:
             link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-            location = "London"
-            data.append(
-                [
-                    item.find_element(By.CSS_SELECTOR, "a").text.strip(),
-                    com,
-                    location,
-                    link,
-                ]
-            )
+            location = item.find_element(By.CSS_SELECTOR, ".text-sm").text.split("\n")[-1].strip()
+            for str in locations:
+                if (str in location):
+                    data.append(
+                        [
+                            item.find_element(By.CSS_SELECTOR, "h3").text.strip(),
+                            com,
+                            location,
+                            link,
+                        ]
+                    )
+                    break
 
         try:
-            next_button = driver.find_element(By.CSS_SELECTOR, '.pagingButtons a:nth-child(2)')
-            if "buttonDisabled" in next_button.get_attribute("class"):
-                flag = False
-            else:
-                next_button.click()
-                
+            button = driver.find_element(By.CSS_SELECTOR, 'a[title="Next page"]')
+            driver.execute_script("arguments[0].scrollIntoView();", button)
+            driver.execute_script("arguments[0].click();", button)
             time.sleep(4)
-        except:
+        except Exception:
             flag = False
             print("No More Jobs")
 
