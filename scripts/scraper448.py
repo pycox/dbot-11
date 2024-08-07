@@ -26,7 +26,7 @@ def main(key, com, url, locations):
                 break
             last_height = new_height
         
-        
+    
         while True:
             try:
                 buttons = driver.find_elements(By.CSS_SELECTOR, ".link.details-desc.js-more")
