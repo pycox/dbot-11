@@ -6,9 +6,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 390
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -17,31 +16,42 @@ def main():
     time.sleep(4)
 
     try:
-        driver.find_element(By.CSS_SELECTOR, 'a#hs-eu-decline-button').click()
+        driver.find_element(By.CSS_SELECTOR, '.gdprcookie-rejectbutton').click()
     except:
         print("No Cookie Button")
 
     time.sleep(4)
-    
-    data = []
-    
-    try:
-        items = driver.find_elements(By.CSS_SELECTOR, "div#vacancies-listing-results div.col-span-4")
-    except:
-        items = []
 
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, "h4").text.strip()
-        if location in ['Birmingham', 'Glasgow', 'Brighton']:
-            data.append(
-                [
-                    item.find_element(By.CSS_SELECTOR, "h2").text.strip(),
-                    com,
-                    f'{location}, United Kingdom',
-                    link,
-                ]
-            )
+    data = []
+
+    flag = True
+    while flag:
+        items = driver.find_elements(By.CSS_SELECTOR, ".ListGridContainer .rowContainerHolder")
+        for item in items:
+            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+            location = item.find_element(By.CSS_SELECTOR, ".codelist5value_vacancyColumn").text.strip()
+            if location in locations:
+                data.append(
+                    [
+                        item.find_element(By.CSS_SELECTOR, "a").text.strip(),
+                        com,
+                        location,
+                        link,
+                    ]
+                )
+
+        try:
+            next_button = driver.find_element(By.CSS_SELECTOR, '.pagingButtons a.scroller_movenext')
+            driver.execute_script("arguments[0].scrollIntoView();", next_button)
+            if next_button.get_attribute("disabled") == "disabled":
+                flag = False
+            else:
+                next_button.click()
+
+            time.sleep(4)
+        except:
+            flag = False
+            print("No More Jobs")
 
     driver.quit()
     updateDB(key, data)
