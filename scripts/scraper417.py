@@ -3,12 +3,12 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
 from utils import readUrl, updateDB
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import time
 
 
-def main():
-    key = 417
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -16,30 +16,30 @@ def main():
 
     time.sleep(4)
 
-    try:
-        driver.find_element(By.CSS_SELECTOR, "button[data-action='click->common--cookies--alert#disableAll']").click()
-    except:
-        print("No Cookie Button")
+    iframe = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "#joblyFrame")))
+    driver.switch_to.frame(iframe)
+    
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
     time.sleep(4)
 
     data = []
     
-    items = driver.find_elements(By.CSS_SELECTOR, "#jobs_list_container li")
+    items = driver.find_elements(By.CSS_SELECTOR, "section.flex.flex-col.w-full div.flex.justify-between.items-center.w-full.py-4.pl-7.pr-5.my-2")
     for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, ".mt-1.text-md span:nth-child(3)").text.strip()
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
+        location = item.find_element(By.CSS_SELECTOR, "p span").text.strip()
+        for str in locations:
             if (str in location):
                 data.append(
                     [
-                        item.find_element(By.CSS_SELECTOR, "a span").text.strip(),
+                        item.find_element(By.CSS_SELECTOR, "p").text.strip(),
                         com,
                         location,
-                        link,
+                        url,
                     ]
                 )
                 break
+
 
     driver.quit()
     updateDB(key, data)
