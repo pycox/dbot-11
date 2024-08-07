@@ -2,39 +2,37 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 419
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    time.sleep(6)
+    time.sleep(4)
 
     data = []
     
-    items = driver.find_elements(By.CSS_SELECTOR, ".job_collection_item.data-id")
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, ".job_pagelist_meta.list_js_office").text.strip()
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
-            if (str in location):
+    if "UK" in locations:
+
+        tabs = driver.find_elements(By.CSS_SELECTOR, "ul.tabs-nav.r-tabs-nav li")
+        for tab in tabs:
+            tab.click()
+            time.sleep(2)
+        
+            items = driver.find_elements(By.CSS_SELECTOR, ".jobs__tab.r-tabs-panel.r-tabs-state-active > div.job.js-job")
+            for item in items:
                 data.append(
                     [
-                        item.find_element(By.CSS_SELECTOR, "h2").text.strip(),
+                        item.find_element(By.CSS_SELECTOR, ".job__title").text.strip(),
                         com,
-                        location,
-                        link,
+                        "UK",
+                        url,
                     ]
                 )
-                break
 
 
     driver.quit()
