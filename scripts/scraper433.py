@@ -6,9 +6,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 433
-    com, url = readUrl(key)
+
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -17,29 +16,42 @@ def main():
     time.sleep(4)
 
     try:
-        driver.find_element(By.CSS_SELECTOR, 'button[data-cky-tag="reject-button"]').click()
+        driver.find_element(By.CSS_SELECTOR, '.btn.cookie-consent-bar__btn-accept.close.teal-bg').click()
     except:
         print("No Cookie Button")
 
     time.sleep(4)
 
     data = []
-
-    items = driver.find_elements(By.CSS_SELECTOR, ".workable__job")
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, ".workable__job-tags.text-right span:nth-child(2)").text.strip()
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
-            if (str in location):
+    
+    if "UK" in locations:
+        flag = True
+        while flag:
+            items = driver.find_elements(By.CSS_SELECTOR, ".vacancy-list li.results-item.vacancy")
+            for item in items:
+                link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
                 data.append(
                     [
-                        item.find_element(By.CSS_SELECTOR, ".workable__job-title").text.strip(),
+                        item.find_element(By.CSS_SELECTOR, "a").text.strip(),
                         com,
-                        location,
+                        "UK",
                         link,
                     ]
                 )
-                break
+
+            try:
+                button = driver.find_element(By.CSS_SELECTOR, 'button.next')
+                driver.execute_script("arguments[0].scrollIntoView();", button)
+                if "disable" in button.get_attribute("class"):
+                    flag = False
+                else:
+                    button.click()
+                    
+                time.sleep(4)
+            except:
+                flag = False
+                print("No More Jobs")
+
 
     driver.quit()
     updateDB(key, data)
