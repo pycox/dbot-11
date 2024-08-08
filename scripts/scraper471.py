@@ -6,9 +6,8 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 471
-    com, url = readUrl(key)
+
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -16,23 +15,43 @@ def main():
 
     time.sleep(4)
 
+    try:
+        driver.find_element(By.CSS_SELECTOR, '#onetrust-accept-btn-handler').click()
+    except:
+        print("No Cookie Button")
+
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    time.sleep(4)
+
     data = []
     
-    # items = driver.find_elements(By.CSS_SELECTOR, ".job-list li")
-    # for item in items:
-    #     link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-    #     location = item.find_element(By.CSS_SELECTOR, ".location").text.strip()
-    #     for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
-    #         if (str in location):
-    #             data.append(
-    #                 [
-    #                     item.find_element(By.CSS_SELECTOR, ".job-title").text.strip(),
-    #                     com,
-    #                     location,
-    #                     link,
-    #                 ]
-    #             )
-    #             break
+    flag = True
+    while flag:
+        items = driver.find_elements(By.CSS_SELECTOR, "#searchresults tbody tr.data-row")
+        for item in items:
+            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+            location = item.find_element(By.CSS_SELECTOR, ".jobLocation").text.strip()
+            for str in locations:
+                if (str in location):
+                    data.append(
+                        [
+                            item.find_element(By.CSS_SELECTOR, ".jobTitle").text.strip(),
+                            com,
+                            location,
+                            link,
+                        ]
+                    )
+                    break
+
+        try:
+            curr_button = int(driver.find_element(By.CSS_SELECTOR, '.pagination li.active').text.strip())
+            next_button = driver.find_element(By.CSS_SELECTOR, f'.pagination li a[title="Page {curr_button+1}"]')
+            driver.execute_script("arguments[0].scrollIntoView();", next_button)
+            driver.execute_script("arguments[0].click();", next_button)
+            time.sleep(4)
+        except:
+            flag = False
+            print("No More Jobs")
 
 
     driver.quit()
