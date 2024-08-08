@@ -1,35 +1,50 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import Select
 from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 467
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
     time.sleep(4)
+    
+    try:
+        driver.find_element(By.CSS_SELECTOR, 'button[data-action="click->common--cookies--alert#disableAll"]').click()
+    except:
+        print("No Cookie Button")
+    time.sleep(3)
+
+    flag = True
+    while flag:
+      try:
+        driver.find_element(By.CSS_SELECTOR, 'a#show_more_button').click()
+        time.sleep(4)
+      except:
+        flag = False
+        print("No more Jobs")
+
+    items = driver.find_elements(By.CSS_SELECTOR, "ul#jobs_list_container > li")
 
     data = []
-    
-    driver.execute_script("arguments[0].scrollIntoView();", driver.find_element(By.CSS_SELECTOR, "#site-footer"))
-    time.sleep(4)
-    
-    items = driver.find_elements(By.CSS_SELECTOR, "div.w-full.space-y-30 > div")
+
     for item in items:
         link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, "div.w-full.flex.flex-wrap.items-center.justify-between > div:nth-child(1) > ul > li:nth-child(1) span.text-14").text.strip()
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
+        try:
+          location = item.find_element(By.CSS_SELECTOR, 'div > span:nth-child(3)').text.strip()
+        except:
+          location = item.find_element(By.CSS_SELECTOR, 'div > span').text.strip()
+
+        for str in locations:
             if (str in location):
                 data.append(
                     [
-                        item.find_element(By.CSS_SELECTOR, "h3").text.strip(),
+                        item.find_element(By.CSS_SELECTOR, "span").text.strip(),
                         com,
                         location,
                         link,
@@ -37,8 +52,8 @@ def main():
                 )
                 break
 
-
     driver.quit()
+
     updateDB(key, data)
 
 
