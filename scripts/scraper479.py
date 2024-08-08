@@ -5,54 +5,44 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 479
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
-
-    time.sleep(10)
-
-    try:
-        driver.find_element(
-            By.CSS_SELECTOR, "button[data-test='cookie-banner-accept']"
-        ).click()
-    except Exception as e:
-        print(f"Scraper{key} cookie Button: {e}")
-
-    time.sleep(4)
-
-    doms = driver.find_elements(By.XPATH, "//h3[contains(text(), 'US')]")
-    doms = doms + driver.find_elements(By.XPATH, "//h3[contains(text(), 'UK')]")
-
+    
+    flag = True
     data = []
-
-    for dom in doms:
-        pa = dom.find_element(By.XPATH, "../..")
-
-        location = dom.text.strip()
-
-        items = pa.find_elements(By.CSS_SELECTOR, "a")
-
-        for item in items:
-            link = item.get_attribute("href").strip()
-            title = item.find_element(By.CSS_SELECTOR, "div > div").text.strip()
-
-            data.append(
-                [
-                    title,
-                    com,
-                    location,
-                    link,
-                ]
-            )
-
+    
+    if "UK" in locations:
+        while flag:
+            try:
+                time.sleep(5)
+                items = driver.find_elements(By.CSS_SELECTOR, "li.css-1q2dra3")
+                
+                for item in items:
+                    link = item.find_element(By.CSS_SELECTOR, "a").get_attribute('href')
+                                
+                    data.append([
+                        item.find_element(By.CSS_SELECTOR, "a").text.strip(),
+                        com,
+                        "UK",
+                        link
+                    ])
+                                
+                if len(driver.find_elements(By.CSS_SELECTOR, "button[data-uxi-element-id='next']")) > 0: 
+                    driver.find_element(By.CSS_SELECTOR, "button[data-uxi-element-id='next']").click()
+                else: 
+                    flag = False
+                    break
+            
+            except Exception as e:
+                flag = False
+            
     driver.quit()
-
     updateDB(key, data)
 
 
 if __name__ == "__main__":
     main()
+    
