@@ -6,28 +6,57 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 476
-    com, url = readUrl(key)
+
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
+
+    time.sleep(4)
+
+    try:
+        driver.find_element(By.CSS_SELECTOR, '.c-button.js-cookie-consent').click()
+    except:
+        print("No Cookie Button")
+
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    
     time.sleep(4)
 
     data = []
     
-    items = driver.find_elements(By.CSS_SELECTOR, ".job-item-content")
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a.job-description").get_attribute("href").strip()
-        data.append(
-            [
-                item.find_element(By.CSS_SELECTOR, "h2").text.strip(),
-                com,
-                "London, UK",
-                link,
-            ]
-        )
+    flag = True
+    while flag:
+        items = driver.find_elements(By.CSS_SELECTOR, ".c-card.c-card--job")
+        for item in items:
+            try:
+                location = item.find_element(By.CSS_SELECTOR, "li:nth-child(1)").text.strip()
+            except:
+                continue
+            for str in locations:
+                if (str in location):
+                    data.append(
+                        [
+                            item.find_element(By.CSS_SELECTOR, "h2").text.strip(),
+                            com,
+                            location,
+                            item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip(),
+                        ]
+                    )
+                    break
+
+        try:
+            button = driver.find_element(By.CSS_SELECTOR, 'a[aria-label="Next page"]')
+            if not button.get_attribute("href"):
+                flag = False
+            else:
+                driver.execute_script("arguments[0].scrollIntoView();", button)
+                driver.execute_script("arguments[0].click();", button)
+                time.sleep(4)
+        except:
+            flag = False
+            print("No More Jobs")
 
 
     driver.quit()
