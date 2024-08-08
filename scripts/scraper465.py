@@ -6,44 +6,37 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 465
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
-    options.add_argument("--start-maximized")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    time.sleep(6)
+    time.sleep(4)
+
+    try:
+        driver.find_element(By.CSS_SELECTOR, '#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowallSelection').click()
+    except:
+        print("No Cookie Button")
+
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    time.sleep(4)
 
     data = []
     
-    for region in ["United Kingdom", "United States"]:
-        driver.execute_script("arguments[0].click();", driver.find_element(By.CSS_SELECTOR, f'div#CountryFacet label input[aria-label="{region}"]'))
-        time.sleep(4)
     
-    flag = True
-    while flag:
-        items = driver.find_elements(By.CSS_SELECTOR, "#j-careers-search__results .c-careers-search__list-item")
+    if "UK" in locations:
+        items = driver.find_elements(By.CSS_SELECTOR, ".wysiwyg .page-as-block__content")
         for item in items:
             link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-            location = item.find_element(By.CSS_SELECTOR, ".location-field p").text.strip()
             data.append(
                 [
-                    item.find_element(By.CSS_SELECTOR, "h6").text.strip(),
+                    item.find_element(By.CSS_SELECTOR, "h3").text.strip(),
                     com,
-                    location,
+                    "UK",
                     link,
                 ]
             )
-
-        try:
-            driver.find_element(By.CSS_SELECTOR, 'a.c-careers-search__page-next').click()
-            time.sleep(4)
-        except:
-            flag = False
-            print("No More Jobs")
 
 
     driver.quit()
