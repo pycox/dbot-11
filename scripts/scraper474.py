@@ -6,9 +6,7 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 474
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -17,31 +15,44 @@ def main():
     time.sleep(4)
 
     try:
-        driver.find_element(By.CSS_SELECTOR, 'button.iubenda-cs-reject-btn').click()
+        driver.find_element(By.CSS_SELECTOR, 'button#cookie-acknowledge').click()
     except:
         print("No Cookie Button")
-
-    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
     time.sleep(4)
 
     data = []
+    regions = []
     
-    items = driver.find_elements(By.CSS_SELECTOR, ".job_card")
-    for item in items:
-        link = url
-        location = item.find_element(By.CSS_SELECTOR, ".city.current-g").text.strip()
-        for str in ['Brooklyn', 'London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
-            if (str in location):
-                data.append(
-                    [
-                        item.find_element(By.CSS_SELECTOR, "h4").text.strip(),
-                        com,
-                        location,
-                        link,
-                    ]
-                )
-                break
+    if "UK" in locations:
+        regions.append(("UK", "GB"))
+    
+    if "US" in locations:
+        regions.append(("US", "US"))
+    
+    for location, location_code in regions:
+        driver.get(f"{url}?optionsFacetsDD_country={location_code}")
+        time.sleep(4)
+        
+        flag = True
+        while flag:
+            try:
+                driver.find_element(By.CSS_SELECTOR, "#tile-more-results").click()
+                time.sleep(7)
+            except Exception:
+                flag = False
+        
+        items = driver.find_elements(By.CSS_SELECTOR, ".row.job.job-row")
+        for item in items:
+            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+            data.append(
+                [
+                    item.find_element(By.CSS_SELECTOR, ".tiletitle a").text.strip(),
+                    com,
+                    location,
+                    link,
+                ]
+            )
 
 
     driver.quit()
