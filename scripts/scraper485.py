@@ -1,13 +1,12 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import Select
 from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 485
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -15,23 +14,26 @@ def main():
 
     time.sleep(4)
 
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+    time.sleep(4)
+
     data = []
+    
+    if "UK" in locations:
+        items = driver.find_elements(By.CSS_SELECTOR, "#article-content article")
+        for item in items:
+            data.append(
+                [
+                    item.find_element(By.CSS_SELECTOR, "h5").text.strip(),
+                    com,
+                    "UK",
+                    url,
+                ]
+            )
 
-    # items = driver.find_elements(By.CSS_SELECTOR, ".css-lghcvc.eny6ewj0")
-
-    # for item in items:
-    #     link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
-    #     data.append(
-    #         [
-    #             item.find_element(By.CSS_SELECTOR, "a").text.strip(),
-    #             com,
-    #             "London, UK",
-    #             link,
-    #         ]
-    #     )
 
     driver.quit()
-
     updateDB(key, data)
 
 
