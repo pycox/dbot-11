@@ -1,13 +1,12 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import Select
 from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 462
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -16,36 +15,38 @@ def main():
     time.sleep(4)
 
     try:
-        driver.find_element(
-            By.CSS_SELECTOR,
-            "button#onetrust-accept-btn-handler",
-        ).click()
-    except Exception as e:
-        print(f"Scraper{key} cookiee button: {e}")
+        driver.find_element(By.CSS_SELECTOR, '.decline.sqs-button-element--secondary.sqs-cookie-banner-v2-deny').click()
+    except:
+        print("No Cookie Button")
 
-    time.sleep(4)
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    time.sleep(1)
+    driver.execute_script("window.scrollTo(document.body.scrollHeight, 0);")
+    time.sleep(1)
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    time.sleep(1)
 
     data = []
-
-    items = driver.find_elements(By.CSS_SELECTOR, "div.card-body")
-
+    
+    items = driver.find_elements(By.CSS_SELECTOR, "li.list-item")
     for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
-        location = item.find_element(
-            By.XPATH, "//div[small[text()='Location']]/following-sibling::div"
-        ).text.strip()
+        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+        location = item.find_element(By.CSS_SELECTOR, "p")
+        location = driver.execute_script("return arguments[0].innerText;", location).strip()
+        for str in locations:
+            if (str in location):
+                data.append(
+                    [
+                        driver.execute_script("return arguments[0].innerText;", item.find_element(By.CSS_SELECTOR, "h2")).strip(),
+                        com,
+                        location,
+                        link,
+                    ]
+                )
+                break
 
-        data.append(
-            [
-                item.find_element(By.CSS_SELECTOR, "strong").text.strip(),
-                com,
-                location,
-                link,
-            ]
-        )
 
     driver.quit()
-
     updateDB(key, data)
 
 
