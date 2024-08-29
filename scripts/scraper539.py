@@ -6,30 +6,43 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 539
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    time.sleep(4)
+    time.sleep(3)
+
+    try:
+        driver.find_element(By.CSS_SELECTOR, '.accept-cookies.js-accept-cookies').click()
+    except:
+        print("No Cookie Button")
+
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+    time.sleep(3)
 
     data = []
     
-    items = driver.find_elements(By.CSS_SELECTOR, "li.stm_careers.type-stm_careers.status-publish.hentry")
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        data.append(
-            [
-                item.find_element(By.CSS_SELECTOR, "a").text.strip(),
-                com,
-                "United Kingdom",
-                link,
-            ]
-        )
-
+    if "UK" in locations:
+        items = driver.find_elements(By.CSS_SELECTOR, "span.tab-heading.js-tab-heading")
+        for item in items:
+            driver.execute_script("arguments[0].click();", item)
+            time.sleep(1)
+            content_div = item.find_element(By.XPATH, "./following-sibling::div[@class='tab-content js-tab-content']")
+            sub_items = content_div.find_elements(By.CSS_SELECTOR, ".tab-content.js-tab-content p a[rel=\"noopener noreferrer\"]")
+            for sub_item in sub_items:
+                link = sub_item.get_attribute("href").strip()
+                title = link.replace(".pdf", "").split("/jd-")[-1].replace("-"," ").title()
+                data.append(
+                    [
+                        title,
+                        com,
+                        "UK",
+                        link,
+                    ]
+                )
 
     driver.quit()
     updateDB(key, data)
