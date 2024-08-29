@@ -6,9 +6,7 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 541
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -16,24 +14,41 @@ def main():
 
     time.sleep(4)
 
+    try:
+        driver.find_element(By.CSS_SELECTOR, '#epdsubmit').click()
+    except:
+        print("No Cookie Button")
+
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    
+    time.sleep(4)
+
     data = []
     
-    items = driver.find_elements(By.CSS_SELECTOR, "ul li[role='listitem']")
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, "div[data-ui='job-location']").text
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom']:
-            if (str in location):
-                data.append(
-                    [
-                        item.find_element(By.CSS_SELECTOR, "h3").text.strip(),
-                        com,
-                        location,
-                        link,
-                    ]
-                )
-                break
+    flag = True
+    while flag:
+        items = driver.find_elements(By.CSS_SELECTOR, "div.vsr-job-big")
+        for item in items:
+            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+            data.append(
+                [
+                    item.find_element(By.CSS_SELECTOR, "a").text.strip(),
+                    com,
+                    "UK",
+                    link,
+                ]
+            )
 
+        try:
+            curr_button = int(driver.find_element(By.CSS_SELECTOR, '.paginator span[aria-current="true"]').text.strip())
+            next_button = driver.find_element(By.CSS_SELECTOR, f'.paginator a[title="Go to page {curr_button+1}"]')
+            driver.execute_script("arguments[0].scrollIntoView();", next_button)
+            driver.execute_script("arguments[0].click();", next_button)
+            time.sleep(4)
+        except Exception:
+            flag = False
+            print("No More Jobs")
+                
 
     driver.quit()
     updateDB(key, data)
