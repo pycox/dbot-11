@@ -6,37 +6,41 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 551
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    time.sleep(4)
+    time.sleep(3)
+
+    try:
+        driver.find_element(By.CSS_SELECTOR, '#onetrust-accept-btn-handler').click()
+    except:
+        print("No Cookie Button")
 
     data = []
-    
-    items = driver.find_elements(By.CSS_SELECTOR, ".srJobList tr")
-    print(items)
-    for item in items[1:]:
-        print(item)
-        link = item.get_attribute("onclick").strip()[13:-3]
-        print(link)
-        location = item.find_element(By.CSS_SELECTOR, ".srJobListLocation").text.strip()
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
-            if (str in location):
-                data.append(
-                    [
-                        item.find_element(By.CSS_SELECTOR, ".srJobListJobTitle").text.strip(),
-                        com,
-                        location,
-                        link,
-                    ]
-                )
-                break
 
+    for location in ["US", "GB"]:
+        if location not in locations:
+           continue
+
+        driver.get(f"{url}?country={location}")
+        time.sleep(4)
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        time.sleep(2)
+    
+        items = driver.find_elements(By.CSS_SELECTOR, ".career-job-results-container .single .card .card-inner")
+        for item in items:
+            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+            data.append(
+                [
+                    item.find_element(By.CSS_SELECTOR, "h3").text.strip(),
+                    com,
+                    location,
+                    link,
+                ]
+            )
 
     driver.quit()
     updateDB(key, data)
