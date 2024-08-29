@@ -6,9 +6,7 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 488
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -17,22 +15,43 @@ def main():
     time.sleep(4)
 
     data = []
+    regions = []
     
-    items = driver.find_elements(By.CSS_SELECTOR, ".job-block")
+    if "UK" in locations:
+        regions.append("UK")
+    if "US" in locations:
+        regions.append("USA")
+    
+    flag = True
+    while flag:
+        time.sleep(4)
+        try:
+            button = driver.find_element(By.CSS_SELECTOR, "a#LoadMoreJobs")
+            parent_span = button.find_element(By.XPATH, "./parent::span")
+            if parent_span.get_attribute("style") == "display: none;":
+                flag = False
+            else:
+                driver.execute_script("arguments[0].scrollIntoView();", button)
+                driver.execute_script("arguments[0].click();", button)
+        except Exception:
+            flag = False
+    
+    items = driver.find_elements(By.CSS_SELECTOR, "#Opportunities .opportunity")
     for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "h4 a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, ".job-info li:nth-child(1)").text.strip()
-        for str in ['Liverpool', 'London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
+        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+        location = item.find_element(By.CSS_SELECTOR, 'span[data-automation="city-state-zip-country-label"]').text.strip()
+        for str in regions:
             if (str in location):
                 data.append(
                     [
-                        item.find_element(By.CSS_SELECTOR, "h4").text.strip(),
+                        item.find_element(By.CSS_SELECTOR, "h3").text.strip(),
                         com,
-                        location,
+                        str,
                         link,
                     ]
                 )
                 break
+
 
     driver.quit()
     updateDB(key, data)
