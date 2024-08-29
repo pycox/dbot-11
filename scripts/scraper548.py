@@ -1,49 +1,40 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import Select
 from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 548
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    time.sleep(2)
+    time.sleep(4)
+
+    items = driver.find_elements(By.CSS_SELECTOR, ".fab-Card.fab-Card--sizeFull ul li")
 
     data = []
-    
-    flag = True
-    while flag:
-        time.sleep(4)
-        try:
-            driver.find_element(By.CSS_SELECTOR, "#show_more_button").click()
-        except Exception:
-            flag = False
-    
-    items = driver.find_elements(By.CSS_SELECTOR, "#jobs_list_container li")
+
     for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, ".mt-1.text-md").text
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom']:
+        location = item.find_elements(By.CSS_SELECTOR, "p")[1].text.strip()
+        for str in locations:
             if (str in location):
+                link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
                 data.append(
                     [
-                        item.find_element(By.CSS_SELECTOR, "span.company-link-style").text.strip(),
+                        item.find_element(By.CSS_SELECTOR, "a").text.strip(),
                         com,
-                        str,
+                        location,
                         link,
                     ]
                 )
                 break
 
-
     driver.quit()
+    
     updateDB(key, data)
 
 
