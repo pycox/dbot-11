@@ -6,35 +6,32 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 514
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
-    options.add_argument("--log-level=3")
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
+    time.sleep(4)
+
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+    time.sleep(4)
+
     data = []
     
-    # flag = True
-    # while flag:
-    #     items = driver.find_elements(By.CSS_SELECTOR, ".results-item.vacancy")
-    #     for item in items:
-    #         link = item.find_element(By.CSS_SELECTOR, ".vacancy__title a").get_attribute("href").strip()
-    #         location = item.find_element(By.CSS_SELECTOR, ".vacancy__region").text.strip()
-    #         for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
-    #             if (str in location):
-    #                 data.append(
-    #                     [
-    #                         item.find_element(By.CSS_SELECTOR, ".vacancy__title").text.strip(),
-    #                         com,
-    #                         location,
-    #                         link,
-    #                     ]
-    #                 )
-    #                 break
-
+    if "UK" in locations:
+        items = driver.find_elements(By.CSS_SELECTOR, "ul.posts .vacancy-item")
+        for item in items:
+            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+            data.append(
+                [
+                    item.find_element(By.CSS_SELECTOR, "h2").text.strip(),
+                    com,
+                    "UK",
+                    link,
+                ]
+            )
 
     driver.quit()
     updateDB(key, data)
