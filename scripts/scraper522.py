@@ -6,27 +6,37 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 522
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    time.sleep(4)
+    time.sleep(3)
+
+    try:
+        driver.find_element(By.CSS_SELECTOR, 'button[data-hook="consent-banner-apply-button"]').click()
+    except:
+        print("No Cookie Button")
+
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+    time.sleep(3)
 
     data = []
     
-    items = driver.find_elements(By.CSS_SELECTOR, "li.modal-item.big-modal-item.clearfix")
+    items = driver.find_elements(By.CSS_SELECTOR, 'h2[style="text-align:center; font-size:40px;"]')
+    try:
+        items = items[1:-1]
+    except:
+        items = []
     for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
         data.append(
             [
-                item.find_element(By.CSS_SELECTOR, ".modal-item-title").text.strip(),
+                item.text.strip(),
                 com,
                 "UK",
-                link,
+                url,
             ]
         )
 
