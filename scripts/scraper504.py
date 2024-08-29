@@ -6,9 +6,7 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 504
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -16,23 +14,26 @@ def main():
 
     time.sleep(4)
 
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+    time.sleep(4)
+
     data = []
     
-    items = driver.find_elements(By.CSS_SELECTOR, ".seo-pages-100b19y-StyledLocationAndJobs.e2oznfq0")
+    items = driver.find_elements(By.CSS_SELECTOR, '.jv-job-list tr')
     for item in items:
-        location = item.find_element(By.CSS_SELECTOR, ".seo-pages-1va6nd7-StyledText").text.strip()
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US', 'CA', 'WA', 'TX']:
+        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+        location = item.find_element(By.CSS_SELECTOR, ".jv-job-list-location").text.strip()
+        for str in locations:
             if (str in location):
-                subitems = driver.find_elements(By.CSS_SELECTOR, ".seo-pages-1cxckch-StyledUrlWrapper.epip1yb0")
-                for subitem in subitems:
-                    data.append(
-                        [
-                            subitem.find_element(By.CSS_SELECTOR, "a").text.strip(),
-                            com,
-                            location,
-                            subitem.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip(),
-                        ]
-                    )
+                data.append(
+                    [
+                        item.find_element(By.CSS_SELECTOR, "a").text.strip(),
+                        com,
+                        location,
+                        link,
+                    ]
+                )
                 break
 
 
