@@ -1,39 +1,45 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import Select
 from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 505
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
     time.sleep(4)
-    
+
     try:
-        driver.find_element(By.CSS_SELECTOR, 'button.cc-nb-okagree').click()
-        time.sleep(4)
+        driver.find_element(By.CSS_SELECTOR, 'button[show.bind="showDeclineButton"]').click()
     except:
-        print("No Cookiee") 
-        
+        print("No Cookie Button")
+
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+    time.sleep(4)
+
     data = []
     
     flag = True
     while flag:
-        items = driver.find_elements(By.CSS_SELECTOR, ".job-search-section__result a.job-card")
+        items = driver.find_elements(By.CSS_SELECTOR, "li.jobs-list-item")
         for item in items:
-            link = item.get_attribute("href").strip()
-            location = item.find_element(By.CSS_SELECTOR, ".job-card__list li:nth-child(1)").text.strip()
-            for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
+            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+            try:
+                location = item.find_element(By.CSS_SELECTOR, ".job-location").text.split("\n")[-1].strip()
+            except:
+                continue
+            print(location)
+            for str in locations:
                 if (str in location):
                     data.append(
                         [
-                            item.find_element(By.CSS_SELECTOR, "h3").text.strip(),
+                            item.find_element(By.CSS_SELECTOR, ".job-title").text.strip(),
                             com,
                             location,
                             link,
@@ -42,11 +48,9 @@ def main():
                     break
 
         try:
-            next_button = driver.find_element(By.CSS_SELECTOR, '.pagination__btn--next')
-            if "is-disabled" in next_button.get_attribute("class"):
-                flag = False
-            else:
-                driver.execute_script("arguments[0].click();", next_button)
+            button = driver.find_element(By.CSS_SELECTOR, 'a:not(.aurelia-hide)[aria-label="View next page"]')
+            driver.execute_script("arguments[0].scrollIntoView();", button)
+            driver.execute_script("arguments[0].click();", button)
             time.sleep(4)
         except:
             flag = False
