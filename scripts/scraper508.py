@@ -6,9 +6,7 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 508
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -16,23 +14,41 @@ def main():
 
     time.sleep(4)
 
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
     data = []
-    
-    items = driver.find_elements(By.CSS_SELECTOR, ".availablerole")
-    for item in items:
+
+    flag = True
+    while flag:
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        time.sleep(4)
+        items = driver.find_elements(By.CSS_SELECTOR, ".list-unstyled li.media")
+        for item in items:
+            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+            location = item.find_element(By.CSS_SELECTOR, "span.text-secondary").text.strip()
+            for str in locations:
+                if (str in location):
+                    data.append(
+                        [
+                            item.find_element(By.CSS_SELECTOR, "h5").text.strip(),
+                            com,
+                            location,
+                            link,
+                        ]
+                    )
+                    break
+
         try:
-            title = driver.execute_script("return arguments[0].innerText;", item.find_element(By.CSS_SELECTOR, ".jobtitle"))
+            button = driver.find_element(By.CSS_SELECTOR, 'a[role="button"]')
+            if button.text.strip() == "Next":
+                driver.execute_script("arguments[0].scrollIntoView();", button)
+                driver.execute_script("arguments[0].click();", button)
+                time.sleep(4)
+            else:
+                flag = False
         except:
-            continue
-        if title:
-            data.append(
-                [
-                    title.strip(),
-                    com,
-                    "UK",
-                    item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-                ]
-            )
+            flag = False
+            print("No More Jobs")
 
 
     driver.quit()
