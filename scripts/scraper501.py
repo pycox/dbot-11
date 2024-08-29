@@ -6,36 +6,46 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 501
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    # time.sleep(4)
+    time.sleep(4)
 
-    # try:
-    #     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-    #     time.sleep(3)
-    # except:
-    #     print("No Cookie Button")
+    try:
+        driver.find_element(By.CSS_SELECTOR, '#onetrust-reject-all-handler').click()
+    except:
+        print("No Cookie Button")
 
+    time.sleep(4)
 
     data = []
     
-    # items = driver.find_elements(By.CSS_SELECTOR, ".vacancies-container .vacancy")
-    # for item in items:
-    #     link = item.get_attribute("href").strip()
-    #     data.append(
-    #         [
-    #             item.text.strip(),
-    #             com,
-    #             "UK",
-    #             link,
-    #         ]
-    #     )
+    if "UK" in locations:
+    
+        flag = True
+        while flag:
+            items = driver.find_elements(By.CSS_SELECTOR, "ol#jobsListParent li .job-card")
+            for item in items:
+                link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+                data.append(
+                    [
+                        item.find_element(By.CSS_SELECTOR, ".job-title").text.strip(),
+                        com,
+                        "UK",
+                        link,
+                    ]
+                )
+
+            try:
+                next_button = driver.find_element(By.CSS_SELECTOR, '#paginationHolder a[rel="next"]')
+                next_button.click()
+                time.sleep(4)
+            except:
+                flag = False
+                print("No More Jobs")
 
 
     driver.quit()
