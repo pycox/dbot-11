@@ -6,9 +6,7 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 498
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -17,33 +15,26 @@ def main():
     time.sleep(4)
 
     data = []
-    for location, loc_code in [("USA", "204"), ("London", "174")]:
-        Select(driver.find_element(By.CSS_SELECTOR, "select#field_31")).select_by_value(loc_code)
-        time.sleep(2)
-        driver.find_element(By.CSS_SELECTOR, "#submit").click()
-        time.sleep(4)
-
+    
+    if "UK" in locations:
+    
         flag = True
         while flag:
-            items = driver.find_elements(By.CSS_SELECTOR, ".vacancy")
+            items = driver.find_elements(By.CSS_SELECTOR, ".ListGridContainer .rowContainer")
             for item in items:
                 link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
                 data.append(
                     [
-                        item.find_element(By.CSS_SELECTOR, "h3").text.strip(),
+                        item.find_element(By.CSS_SELECTOR, "a").text.strip(),
                         com,
-                        location,
+                        "UK",
                         link,
                     ]
                 )
 
             try:
-                next_button = driver.find_element(By.CSS_SELECTOR, '.paging_links a:nth-child(1)')
-                if not next_button.text.startswith("Next"):
-                    flag = False
-                else:
-                    next_button.click()
-                    
+                next_button = driver.find_element(By.CSS_SELECTOR, 'a.scroller_movenext.buttonEnabled')
+                next_button.click()
                 time.sleep(4)
             except:
                 flag = False
