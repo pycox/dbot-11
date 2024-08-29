@@ -2,43 +2,75 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 528
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
-    time.sleep(4)
+
+    time.sleep(3)
+
+    try:
+        driver.find_element(By.CSS_SELECTOR, 'button#hs-eu-decline-button').click()
+    except:
+        print("No Cookie Button")
+
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+    time.sleep(3)
 
     data = []
-
-    iframe = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "jv_careersite_iframe_id")))
-    driver.switch_to.frame(iframe)
-    items = driver.find_elements(By.CSS_SELECTOR, ".jv-featured-job")
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = " ".join(item.find_element(By.CSS_SELECTOR, ".jv-featured-job-location").text.strip().split(" ")[1:])
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
-            if (str in location):
+    sub_links = []
+    
+    if "UK" in locations:
+        items = driver.find_elements(By.CSS_SELECTOR, 'ul[data-rte-list="default"] li p a:nth-child(1)')
+        for item in items:
+            link = item.get_attribute("href").strip()
+            if link.startswith("https://phf.tbe.taleo.net"):
+                sub_links.append(link)
+            else:
                 data.append(
                     [
-                        item.find_element(By.CSS_SELECTOR, ".jv-featured-job-title").text.strip(),
+                        item.text.strip(),
                         com,
-                        location,
+                        "US",
                         link,
                     ]
                 )
 
+        for link in sub_links:
+            driver.get(link)
+            time.sleep(3)
+            driver.find_element(By.CSS_SELECTOR, 'button.fa-search').click()
+            time.sleep(4)
+            last_height = driver.execute_script("return document.body.scrollHeight")
+            while True:
+                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                time.sleep(1)
+                new_height = driver.execute_script("return document.body.scrollHeight")
+                if new_height == last_height:
+                    break
+                last_height = new_height
+                
+                
+            items = driver.find_elements(By.CSS_SELECTOR, 'h4.oracletaleocwsv2-head-title')
+            for item in items:
+                link = item.find_element(By.CSS_SELECTOR, 'a').get_attribute("href").strip()
+                data.append(
+                    [
+                        item.text.strip(),
+                        com,
+                        "US",
+                        link,
+                    ]
+                )
 
     driver.quit()
-    print(key, data)
+    updateDB(key, data)
 
 
 if __name__ == "__main__":
