@@ -1,23 +1,24 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 487
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
     time.sleep(4)
-
+    
     try:
-        driver.find_element(By.CSS_SELECTOR, 'button#accept-cookies').click()
+        driver.find_element(By.CSS_SELECTOR, '._brlbs-refuse-btn').click()
     except:
         print("No Cookie Button")
 
@@ -25,36 +26,30 @@ def main():
 
     data = []
     
-    flag = True
-    while flag:
-        items = driver.find_elements(By.CSS_SELECTOR, ".items-stretch.ng-star-inserted a.ng-star-inserted")
-        for item in items:
-            link = item.get_attribute("href").strip()
-            location = item.find_element(By.CSS_SELECTOR, "p.paragraph-2.font-medium.text-neutral-600").text.strip()
-            for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
-                if (str in location):
-                    data.append(
-                        [
-                            item.find_element(By.CSS_SELECTOR, "h4").text.strip(),
-                            com,
-                            location,
-                            link,
-                        ]
-                    )
-                    break
 
-        try:
-            
-            next_button = driver.find_element(By.CSS_SELECTOR, '#next-page')
-            if next_button.get_attribute("disabled"):
-                flag = False
-            else:
-                next_button.click()
-                
-            time.sleep(4)
-        except:
-            flag = False
-            print("No More Jobs")
+    if "UK" in locations:
+        
+        iframe = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "iframe")))
+        driver.switch_to.frame(iframe)
+
+        search_field = driver.find_element(By.CSS_SELECTOR, "input#geoLocation_search")
+        driver.execute_script("arguments[0].scrollIntoView();", search_field)
+        time.sleep(2)
+        search_field.send_keys("UK")
+        search_field.send_keys(Keys.ENTER)
+        time.sleep(4)
+        
+        items = driver.find_elements(By.CSS_SELECTOR, ".outputContainer .matchElement:not([style*='display: none'])")
+        for item in items:
+            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+            data.append(
+                [
+                    driver.execute_script("return arguments[0].innerText;", item.find_element(By.CSS_SELECTOR, "a")).strip(),
+                    com,
+                    "UK",
+                    link,
+                ]
+            )
 
 
     driver.quit()
