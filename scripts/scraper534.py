@@ -6,36 +6,47 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 534
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    time.sleep(4)
-
     data = []
     
-    items = driver.find_elements(By.CSS_SELECTOR, ".e-flex.e-con-boxed.e-con.e-parent.nitro-offscreen")
-    for item in items[:-2]:
-        link = item.find_element(By.CSS_SELECTOR, "a.elementor-button.elementor-button-link.elementor-size-sm").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, ".elementor-widget-container").text.split("\n")[-1].split("–")[-1].strip()
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
-            if (str in location):
-                data.append(
-                    [
-                        item.find_element(By.CSS_SELECTOR, "h3").text.strip(),
-                        com,
-                        location,
-                        link,
-                    ]
-                )
-                break
+    time.sleep(4)
+    
+    if "UK" in locations:
+        flag = True
+        while flag:
+            time.sleep(4)
+            try:
+                last_height = driver.execute_script("return document.body.scrollHeight")
+                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                time.sleep(4)
+                new_height = driver.execute_script("return document.body.scrollHeight")
+                if new_height == last_height:
+                    flag = False
+            except:
+                flag = False
+
+        items = driver.find_elements(By.CSS_SELECTOR, "#results .vacancy-search-result-item a.apply-link")
+        for item in items:
+            link = item.get_attribute("href").strip()
+            data.append(
+                [
+                    item.find_element(By.CSS_SELECTOR, "h2").text.strip(),
+                    com,
+                    "UK",
+                    link,
+                ]
+            )
+
 
     driver.quit()
     updateDB(key, data)
+
 
 if __name__ == "__main__":
     main()
