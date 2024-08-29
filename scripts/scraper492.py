@@ -5,49 +5,58 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 492
-    com, url = readUrl(key)
+def main(key, com, url, locations):
+
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
+    if all(loc in locations for loc in ["US", "UK"]):
+        url += "?locationCountry=bc33aa3152ec42d4995f4791a106ed09&locationCountry=29247e57dbaf46fb855b224e03170bc7"
+    elif "US" in locations:
+        url += "?locationCountry=bc33aa3152ec42d4995f4791a106ed09"
+    elif "UK" in locations:
+        url += "?locationCountry=29247e57dbaf46fb855b224e03170bc7"
+
     driver.get(url)
-
-    time.sleep(4)
-
-    try:
-        driver.find_element(By.CSS_SELECTOR, "button.cky-btn-accept").click()
-    except Exception as e:
-        print(f"Scraper{key} cookiee button: {e}")
-
-    data = []
     flag = True
+    data = []
 
     while flag:
         try:
             time.sleep(4)
 
-            driver.find_element(By.CSS_SELECTOR, "a.load_more_jobs").click()
+            items = driver.find_elements(By.CSS_SELECTOR, "li.css-1q2dra3")
+
+            for item in items:
+                link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
+                location = item.find_element(By.CSS_SELECTOR, "dd").text.strip()
+
+                data.append(
+                    [
+                        item.find_element(By.CSS_SELECTOR, "a").text.strip(),
+                        com,
+                        location,
+                        link,
+                    ]
+                )
+
+            if (
+                len(
+                    driver.find_elements(
+                        By.CSS_SELECTOR, "button[data-uxi-element-id='next']"
+                    )
+                )
+                > 0
+            ):
+                driver.find_element(
+                    By.CSS_SELECTOR, "button[data-uxi-element-id='next']"
+                ).click()
+            else:
+                flag = False
+                break
 
         except Exception as e:
             flag = False
-            break
-
-    items = driver.find_elements(By.CSS_SELECTOR, "li.job_listing")
-
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        title = item.find_element(By.CSS_SELECTOR, "div.position").text.strip()
-        location = item.find_element(By.CSS_SELECTOR, "div.location").text.strip()
-
-        data.append(
-            [
-                title,
-                com,
-                location,
-                link,
-            ]
-        )
 
     driver.quit()
 
