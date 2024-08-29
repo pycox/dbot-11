@@ -6,34 +6,42 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 544
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    time.sleep(4)
+    time.sleep(3)
+
+    try:
+        driver.find_element(By.CSS_SELECTOR, '#hs-eu-confirmation-button').click()
+    except:
+        print("No Cookie Button")
+
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+    time.sleep(3)
 
     data = []
-    
-    items = driver.find_elements(By.CSS_SELECTOR, ".job-card.job-card-template")
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = driver.execute_script("return arguments[0].innerText;", item.find_element(By.CSS_SELECTOR, ".job-card-content .job-tag"))
-        for str in ['LONDON', 'NEW YORK', 'SAN FRANCISCO', 'UNITED STATES', 'UNITED KINGDOM']:
-            if (str in location):
+    regions = ["UK", "US"]
+
+    items = driver.find_elements(By.CSS_SELECTOR, ".hhs-accordion-1.accordion-controls")
+    for index, location in enumerate(regions):
+        if location in locations:
+            try:
+                sub_items = items[index].find_elements(By.CSS_SELECTOR, "li a h4")
+            except:
+                continue
+            for sub_item in sub_items:
                 data.append(
                     [
-                        item.find_element(By.CSS_SELECTOR, ".job-title").text.strip(),
+                        sub_item.text.strip(),
                         com,
                         location,
-                        link,
+                        url,
                     ]
                 )
-                break
-
 
     driver.quit()
     updateDB(key, data)
