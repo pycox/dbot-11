@@ -6,9 +6,7 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 552
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -16,23 +14,35 @@ def main():
 
     time.sleep(4)
 
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    
+    time.sleep(4)
+
     data = []
     
-    items = driver.find_elements(By.CSS_SELECTOR, ".rt-tbody .rt-tr-group")
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, ".col-flex-grow-2").text.strip()
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
-            if (str in location):
+    if "UK" in locations:
+        flag = True
+        while flag:
+            items = driver.find_elements(By.CSS_SELECTOR, ".ListGridContainer .rowContainer")
+            for item in items:
+                link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
                 data.append(
                     [
                         item.find_element(By.CSS_SELECTOR, "a").text.strip(),
                         com,
-                        location,
+                        "UK",
                         link,
                     ]
                 )
-                break
+
+            try:
+                button = driver.find_element(By.CSS_SELECTOR, 'a.scroller_movenext.buttonEnabled')
+                driver.execute_script("arguments[0].scrollIntoView();", button)
+                driver.execute_script("arguments[0].click();", button)
+                time.sleep(4)
+            except:
+                flag = False
+                print("No More Jobs")
 
 
     driver.quit()
