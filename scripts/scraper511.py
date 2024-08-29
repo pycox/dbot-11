@@ -6,42 +6,46 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 511
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    time.sleep(2)
+    time.sleep(4)
+
+    try:
+        driver.find_element(By.CSS_SELECTOR, 'a[aria-label="allow cookies"]').click()
+    except:
+        print("No Cookie Button")
+
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+    time.sleep(4)
 
     data = []
     
-    flag = True
-    while flag:
-        items = driver.find_elements(By.CSS_SELECTOR, ".cmp-teaser.card")
+    
+    if "UK" in locations:
+        flag = True
+        while flag:
+            time.sleep(4)
+            try:
+                driver.find_element(By.CSS_SELECTOR, "#searchResultsLoadMoreBtn").click()
+            except Exception:
+                flag = False
+        
+        items = driver.find_elements(By.CSS_SELECTOR, ".job-search__results-items .card.job-card")
         for item in items:
             link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
             data.append(
                 [
-                    item.find_element(By.CSS_SELECTOR, "h3").text.strip(),
+                    item.find_element(By.CSS_SELECTOR, "a").text.strip(),
                     com,
-                    "United Kingdom",
+                    "UK",
                     link,
                 ]
             )
-
-        try:
-            next_button = driver.find_element(By.CSS_SELECTOR, '.cmp-pagination__link-next')
-            if "disabled" in next_button.get_attribute("class"):
-                flag = False
-            else:
-                driver.execute_script("arguments[0].click();", next_button)
-            time.sleep(4)
-        except:
-            flag = False
-            print("No More Jobs")
 
 
     driver.quit()
