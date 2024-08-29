@@ -6,32 +6,35 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 523
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    time.sleep(4)
+    time.sleep(3)
+
     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-    time.sleep(4)
+
+    time.sleep(3)
 
     data = []
     
-    items = driver.find_elements(By.CSS_SELECTOR, ".job-card")
-    print(len(items))
+    items = driver.find_elements(By.CSS_SELECTOR, ".div-block-43")
     for item in items:
         link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        data.append(
-            [
-                driver.execute_script("return arguments[0].innerText;", item.find_element(By.CSS_SELECTOR, ".job-card__title .h4")),
-                com,
-                "UK",
-                link,
-            ]
-        )
+        location = item.find_element(By.CSS_SELECTOR, ".text-block-29f2").text.strip()
+        for str in locations:
+            if (str in location):
+                data.append(
+                    [
+                        item.find_element(By.CSS_SELECTOR, ".text-block-29-e").text.strip(),
+                        com,
+                        location,
+                        link,
+                    ]
+                )
+                break
 
 
     driver.quit()
