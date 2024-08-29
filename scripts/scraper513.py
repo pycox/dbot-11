@@ -6,41 +6,48 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 513
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
-    options.add_argument("--start-maximized")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
+    time.sleep(4)
+
+    try:
+        driver.find_element(By.CSS_SELECTOR, '.close').click()
+    except:
+        print("No Close Button")
+
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    time.sleep(4)
+
     data = []
     
-    # flag = True
-    # while flag:
-    #     items = driver.find_elements(By.CSS_SELECTOR, ".results-item.vacancy")
-    #     for item in items:
-    #         link = item.find_element(By.CSS_SELECTOR, ".vacancy__title a").get_attribute("href").strip()
-    #         location = item.find_element(By.CSS_SELECTOR, ".vacancy__region").text.strip()
-    #         for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
-    #             if (str in location):
-    #                 data.append(
-    #                     [
-    #                         item.find_element(By.CSS_SELECTOR, ".vacancy__title").text.strip(),
-    #                         com,
-    #                         location,
-    #                         link,
-    #                     ]
-    #                 )
-    #                 break
+    if "UK" in locations:
 
-    #     try:
-    #         driver.find_element(By.CSS_SELECTOR, 'a.next').click()
-    #         time.sleep(4)
-    #     except:
-    #         flag = False
-    #         print("No More Jobs")
+        flag = True
+        while flag:
+            items = driver.find_elements(By.CSS_SELECTOR, ".ListGridContainer .rowContainerHolder .rowContainer")
+            for item in items:
+                link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+                data.append(
+                    [
+                        item.find_element(By.CSS_SELECTOR, "a").text.strip(),
+                        com,
+                        "UK",
+                        link,
+                    ]
+                )
+
+            try:
+                button = driver.find_element(By.CSS_SELECTOR, 'a.scroller_movenext.buttonEnabled')
+                driver.execute_script("arguments[0].scrollIntoView();", button)
+                driver.execute_script("arguments[0].click();", button)
+                time.sleep(4)
+            except:
+                flag = False
+                print("No More Jobs")
 
 
     driver.quit()
