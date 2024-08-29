@@ -6,9 +6,7 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 497
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -17,29 +15,36 @@ def main():
     time.sleep(4)
 
     try:
-        driver.find_element(By.CSS_SELECTOR, "button[data-action='click->common--cookies--alert#disableAll']").click()
+        driver.find_element(By.CSS_SELECTOR, 'button#onetrust-reject-all-handler').click()
     except:
         print("No Cookie Button")
+
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    time.sleep(2)
+    driver.execute_script("arguments[0].scrollIntoView();", driver.find_element(By.CSS_SELECTOR, ".cards"))
+    time.sleep(2)
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
     time.sleep(4)
 
     data = []
     
-    items = driver.find_elements(By.CSS_SELECTOR, "#jobs_list_container li")
+    items = driver.find_elements(By.CSS_SELECTOR, ".cards .card a")
     for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, ".mt-1.text-md span:nth-child(3)").text.strip()
-        for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
+        link = item.get_attribute("href").strip()
+        location = item.find_element(By.CSS_SELECTOR, "p").text.split("\n")[0].strip()
+        for str in locations:
             if (str in location):
                 data.append(
                     [
-                        item.find_element(By.CSS_SELECTOR, "a span").text.strip(),
+                        item.find_element(By.CSS_SELECTOR, "h3").text.strip(),
                         com,
                         location,
                         link,
                     ]
                 )
                 break
+
 
     driver.quit()
     updateDB(key, data)
