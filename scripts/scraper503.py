@@ -6,57 +6,36 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 503
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
     time.sleep(4)
-    
+
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+    time.sleep(4)
+
     data = []
-        
-    for location, location_id in [("London", "031b2e9d653801a327cde1b30a0126b5")]:
-        try:
-            driver.find_element(By.CSS_SELECTOR, "button[data-automation-id='distanceLocation']").click()
-            time.sleep(2)
-            driver.find_element(By.CSS_SELECTOR, f"label[for='{location_id}']").click()
-            time.sleep(2)
-            driver.find_element(By.CSS_SELECTOR, "button[data-automation-id='viewAllJobsButton'").click()
-            time.sleep(3)
-        except:
-            continue
-
-        flag = True
-
-        while flag:
-            items = driver.find_elements(By.CSS_SELECTOR, "li.css-1q2dra3")
-            for item in items:
-                link = item.find_element(By.CSS_SELECTOR, "h3 a").get_attribute("href").strip()
+    
+    items = driver.find_elements(By.CSS_SELECTOR, 'div[role="listitem"] a')
+    for item in items:
+        link = item.get_attribute("href").strip()
+        location = item.find_element(By.CSS_SELECTOR, ".jobs_tag").text.strip()
+        for str in locations:
+            if (str in location):
                 data.append(
                     [
-                        item.find_element(By.CSS_SELECTOR, "h3").text.strip(),
+                        item.find_element(By.CSS_SELECTOR, "h1").text.strip(),
                         com,
                         location,
                         link,
                     ]
                 )
+                break
 
-            
-            try:
-                driver.execute_script("arguments[0].click();", driver.find_element(By.CSS_SELECTOR, 'button[data-uxi-element-id="next"]'))
-                
-                time.sleep(4)
-            except Exception:
-                flag = False
-                print("No More Jobs")
-        
-        try:
-            driver.find_element(By.CSS_SELECTOR, 'button[data-automation-id="clearAllButton"]').click()
-        except:
-            print("No filter to clear")
 
     driver.quit()
     updateDB(key, data)
