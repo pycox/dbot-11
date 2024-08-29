@@ -6,9 +6,7 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 530
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
@@ -16,19 +14,23 @@ def main():
 
     time.sleep(4)
 
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    
+    time.sleep(4)
+
     data = []
     
     flag = True
     while flag:
-        items = driver.find_elements(By.CSS_SELECTOR, "li.jobs-list-item")
+        items = driver.find_elements(By.CSS_SELECTOR, "ul.listSingleColumn li.listSingleColumnItem")
         for item in items:
             link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-            location = item.find_element(By.CSS_SELECTOR, ".job-location").text.strip().split("\n")[-1]
-            for str in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']:
+            location = item.find_elements(By.CSS_SELECTOR, "span.listSingleColumnItemMiscDataItem")[-2].text.replace(".", "").strip()
+            for str in locations:
                 if (str in location):
                     data.append(
                         [
-                            item.find_element(By.CSS_SELECTOR, ".job-title span").text.strip(),
+                            item.find_element(By.CSS_SELECTOR, "h3").text.strip(),
                             com,
                             location,
                             link,
@@ -37,7 +39,9 @@ def main():
                     break
 
         try:
-            driver.find_element(By.CSS_SELECTOR, '.icon.icon-arrow-right').click()
+            button = driver.find_element(By.CSS_SELECTOR, 'a.paginationItem.paginationNextLink')
+            driver.execute_script("arguments[0].scrollIntoView();", button)
+            driver.execute_script("arguments[0].click();", button)
             time.sleep(4)
         except:
             flag = False
