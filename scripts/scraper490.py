@@ -1,59 +1,44 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-
+from selenium.webdriver.support.ui import Select
 from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 490
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
     time.sleep(4)
-    iframe = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".careers-page iframe")))
-    driver.switch_to.frame(iframe)
-    driver.execute_script("arguments[0].scrollIntoView();", driver.find_element(By.CSS_SELECTOR, "#benefits"))
+
+    try:
+        driver.find_elements(By.CSS_SELECTOR, '.cookie-button')[1].click()
+    except:
+        print("No Cookie Button")
+
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
     time.sleep(4)
 
     data = []
 
-    items = driver.find_elements(By.CSS_SELECTOR, ".open-pos--single-block")
-    for item in items:
-        title = item.find_element(By.CSS_SELECTOR, 'h1').text.strip()
-        sub_items = item.find_elements(By.CSS_SELECTOR, "div[role='listitem'] a")
-        for sub_item in sub_items:
-            location = sub_item.find_element(By.CSS_SELECTOR, 'div').text.strip()
-            if location in ["New York"]:
-                location = f"{location}, US"
-            elif location in [
-                "Belfast", "Birmingham", "Bournemouth", "Bristol", "Channel Islands", "Cheltenham", "Edinburgh",
-                "Exeter", "Glasgow", "Guernsey", "Jersey", "Leeds", "Liverpool", "Manchester", "Reading", "Reigate",
-                "Sheffield", 
-            ]:
-                location = f"{location}, UK"
-            elif any(substring in location for substring in ['London', 'New York', 'San Francisco', 'United States', 'United Kingdom', 'UK', 'USA', 'US']):
-                pass
-            else:
-                continue
+    if "UK" in locations:    
+        items = driver.find_elements(By.CSS_SELECTOR, "a.jk--link--text")
+        for item in items:
+            link = item.get_attribute("href").strip()
             data.append(
                 [
-                    title,
+                    item.find_element(By.CSS_SELECTOR, ".title.jk--job-title-text").text.strip(),
                     com,
-                    location,
-                    sub_item.get_attribute("href").strip(),
+                    "UK",
+                    link,
                 ]
             )
 
     driver.quit()
-
     updateDB(key, data)
 
 
