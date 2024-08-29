@@ -6,31 +6,37 @@ from utils import readUrl, updateDB
 import time
 
 
-def main():
-    key = 543
-    com, url = readUrl(key)
+def main(key, com, url, locations):
     options = Options()
     options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    time.sleep(4)
+    time.sleep(3)
+
+    try:
+        driver.find_element(By.CSS_SELECTOR, 'button.cookiebanner__buttons__accept').click()
+    except:
+        print("No Cookie Button")
 
     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
+    time.sleep(3)
+
     data = []
     
-    items = driver.find_elements(By.CSS_SELECTOR, ".et_pb_toggle.et_pb_toggle_item")
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        data.append(
-            [
-                item.find_element(By.CSS_SELECTOR, "h3").text.strip(),
-                com,
-                "United Kingdom",
-                link,
-            ]
-        )
+    if "UK" in locations:
+        items = driver.find_elements(By.CSS_SELECTOR, "li.career-jobs__item")
+        for item in items:
+            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+            data.append(
+                [
+                    item.find_element(By.CSS_SELECTOR, "strong").text.strip(),
+                    com,
+                    "UK",
+                    link,
+                ]
+            )
 
     driver.quit()
     updateDB(key, data)
