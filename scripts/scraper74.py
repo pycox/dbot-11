@@ -11,43 +11,29 @@ def main(key, com, url, locations):
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    time.sleep(2)
-
-    try:
-        driver.find_element(By.CSS_SELECTOR,"#accept_all_cookies_button").click()
-    except Exception as e:
-        print(f"Scraper{key} cookiee button: {e}")
-
     time.sleep(4)
 
-    driver.find_element(By.CSS_SELECTOR, "#submitSearch").click()
-    time.sleep(4)
-    
     data = []
-    flag = True
 
-    if "UK" in locations:
-        while flag:
-            items = driver.find_elements(By.CSS_SELECTOR, "li.search-results-job-box")
+    items = driver.find_elements(By.CSS_SELECTOR, "li.whr-item")
 
-            for item in items:
-                link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
-                data.append(
-                    [
-                        item.find_element(By.CSS_SELECTOR, "h3").text.strip(),
-                        com,
-                        "United Kingdom",
-                        link,
-                    ]
-                )
-            
-            try:
-                next_button = driver.find_element(By.CSS_SELECTOR, 'a[title="Go to next search results page"]')
-                next_button.click()
-                time.sleep(4)
-            except:
-                flag = False
-                print("No More Jobs")
+    for item in items:
+        link_tag = item.find_element(By.TAG_NAME, "a")
+        link = link_tag.get_attribute("href") if link_tag else ""
+
+        location_tag = item.find_element(By.CSS_SELECTOR, "li.whr-location")
+        location = location_tag.text.strip() if location_tag else ""
+
+        title_tag = item.find_element(By.TAG_NAME, "h3")
+        title = title_tag.text.strip() if title_tag else ""
+        data.append(
+            [
+                title,
+                com,
+                location,
+                link,
+            ]
+        )
         
 
     driver.quit()
