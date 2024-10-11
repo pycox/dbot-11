@@ -144,7 +144,7 @@ dmypy.json
 
 /db
 /controller
-data.xlsx
+*data.xlsx
 
 /dev.py
 clients.xlsx
