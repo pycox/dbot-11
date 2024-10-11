@@ -10,7 +10,16 @@ dbXlDir = r"data.xlsx"
 
 cashData = {}
 
-cashData = {}
+rowHist = []
+
+try:
+    wb = load_workbook(dbXlDir)
+
+    ws = wb.active
+
+    rowHist = [cell.value.lower() for cell in ws["D"] if cell.value is not None]
+except:
+    rowHist = []
 
 
 def ensure_history_file_exists():
@@ -38,34 +47,100 @@ def getBotSpeed():
 def getLocations(location):
     location_data = {
         "UK": (
-            "UK", "UNITED KINGDOM", "ENG", "GB", "United Kingdom", "London", "LONDON", 
-            "Bristol", "BRISTOL", "Tamworth", "TAMWORTH", "Brighton", "BRIGHTON",
-            "England", "ENGLAND", "Birmingham", "BIRMINGHAM",
-            "Cambridge", "CAMBRIDGE", "Manchester", "MANCHESTER",
-            "Scotland", "SCOTLAND", "Leeds", "LEEDS", "Belfast",
-            "Liverpool", "Newcastle", "Warrington", "Mayfair", "Cambridge",
-            "Reading", "Salford", "Twickenham", "Wembley", "Southampton",
-            "Borough", "BOROUGH"
+            "UK",
+            "UNITED KINGDOM",
+            "ENG",
+            "GB",
+            "United Kingdom",
+            "London",
+            "LONDON",
+            "Bristol",
+            "BRISTOL",
+            "Tamworth",
+            "TAMWORTH",
+            "Brighton",
+            "BRIGHTON",
+            "England",
+            "ENGLAND",
+            "Birmingham",
+            "BIRMINGHAM",
+            "Cambridge",
+            "CAMBRIDGE",
+            "Manchester",
+            "MANCHESTER",
+            "Scotland",
+            "SCOTLAND",
+            "Leeds",
+            "LEEDS",
+            "Belfast",
+            "Liverpool",
+            "Newcastle",
+            "Warrington",
+            "Mayfair",
+            "Cambridge",
+            "Reading",
+            "Salford",
+            "Twickenham",
+            "Wembley",
+            "Southampton",
+            "Borough",
+            "BOROUGH",
         ),
         "US": (
-            "US", "U.S.", "USA", "UNITED STATES", "United States", "New York", 
-            "NEW YORK", "Boston", "BOSTON", "San Francisco", 
-            "SAN FRANCISCO", "Washington", "WASHINGTON", 
-            "Philadelphia", "PHILADELPHIA", "Stamford", "STAMFORD", 
-            "Houston", "HOUSTON", "Los Angeles", "LOS ANGELES", 
-            "Chicago", "CHICAGO", "San Diego", "SAN DIEGO", 
-            "Denver", "DENVER", "Salt Lake City", "SALT LAKE CITY", 
-            "Miami", "MIAMI", "Tampa", "TAMPA", "Orlando", "ORLANDO",
-            "California", "Radnor", "Dallas", "DALLAS", "Denver", "DENVER",
-            "Kansas City", "KANSAS CITY", "Norman", "NORMAN", "Portland",
-            "PORTLAND"
-        )
+            "US",
+            "U.S.",
+            "USA",
+            "UNITED STATES",
+            "United States",
+            "New York",
+            "NEW YORK",
+            "Boston",
+            "BOSTON",
+            "San Francisco",
+            "SAN FRANCISCO",
+            "Washington",
+            "WASHINGTON",
+            "Philadelphia",
+            "PHILADELPHIA",
+            "Stamford",
+            "STAMFORD",
+            "Houston",
+            "HOUSTON",
+            "Los Angeles",
+            "LOS ANGELES",
+            "Chicago",
+            "CHICAGO",
+            "San Diego",
+            "SAN DIEGO",
+            "Denver",
+            "DENVER",
+            "Salt Lake City",
+            "SALT LAKE CITY",
+            "Miami",
+            "MIAMI",
+            "Tampa",
+            "TAMPA",
+            "Orlando",
+            "ORLANDO",
+            "California",
+            "Radnor",
+            "Dallas",
+            "DALLAS",
+            "Denver",
+            "DENVER",
+            "Kansas City",
+            "KANSAS CITY",
+            "Norman",
+            "NORMAN",
+            "Portland",
+            "PORTLAND",
+        ),
     }
 
     if location:
         location = location.strip()
     return location_data.get(location, location_data["UK"] + location_data["US"])
-    
+
 
 def filterUrls():
     wb = load_workbook(ctrXlDir)
@@ -73,12 +148,12 @@ def filterUrls():
     ws = wb.active
 
     urls = []
-    
+
     if ws["D1"].value != "yes":
         return urls
-    
+
     for row in ws.iter_rows(min_row=2, max_row=601):
-    # for row in ws.iter_rows(min_row=1):
+        # for row in ws.iter_rows(min_row=1):
 
         if row[0].value == "ID" or row[0].value is None:
             continue
@@ -144,6 +219,7 @@ def updateHistory(key, val):
 
 def updateDB(key=None, arr=[]):
     global cashData
+    global rowHist
 
     if key is None:
         keyList = sorted(list(cashData.keys()))
@@ -184,11 +260,12 @@ def updateDB(key=None, arr=[]):
         newHist.append(link)
 
         if not link in hist:
-
-            for job in fetchJobs():
-                if job in title.lower():
-                    temp.append(item)
-                    break
+            if not link in rowHist:
+                for job in fetchJobs():
+                    if job in title.lower():
+                        temp.append(item)
+                        rowHist.append(link)
+                        break
 
     cashData[f"{key}"] = temp
 
