@@ -14,6 +14,16 @@ def main(key, com, url, locations):
 
     time.sleep(4)
 
+    try:
+        driver.find_element(
+            By.CSS_SELECTOR,
+            "button[data-action='click->common--cookies--alert#acceptAll']",
+        ).click()
+    except Exception as e:
+        print(f"Scraper{key} cookie Button: {e}")
+
+    time.sleep(4)
+
 
     data = []
 
@@ -22,7 +32,7 @@ def main(key, com, url, locations):
         while flag:
             time.sleep(4)
             try:
-                button = driver.find_element(By.CSS_SELECTOR, "#show_more_button")
+                button = driver.find_element(By.CSS_SELECTOR, "#show_more_button").find_element(By.TAG_NAME, 'a')
                 driver.execute_script("arguments[0].scrollIntoView();", button)
                 driver.execute_script("arguments[0].click();", button)
             except Exception:

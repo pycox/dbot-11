@@ -162,7 +162,7 @@ def filterUrls():
             locations = getLocations(ws["G2"].value)
             urls.append((row[0].value, row[1].value, row[2].value, locations))
 
-    return list(set(urls))
+    return urls
 
 
 def readUrl(key):
