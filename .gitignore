@@ -149,3 +149,4 @@ dmypy.json
 /dev.py
 clients.xlsx
 history.json
+*test.py
