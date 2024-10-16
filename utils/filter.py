@@ -1,6 +1,7 @@
 import json
 from openpyxl import load_workbook, Workbook
 import os
+import itertools
 
 histDir = r"history.json"
 
@@ -193,10 +194,12 @@ def readHistory(key=None):
         try:
             data = json.load(file)
 
-            if key is not None:
-                return data.get(f"{key}", [])
+            return list(itertools.chain.from_iterable(data.values()))
 
-            return data
+            # if key is not None:
+            #     return data.get(f"{key}", [])
+
+            # return data
         except:
             return []
 
