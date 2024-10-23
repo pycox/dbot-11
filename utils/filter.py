@@ -204,19 +204,20 @@ def readHistory(key=None):
 
 
 def updateHistory(key, val):
-    ensure_history_file_exists()
+    if key is not None:
+        ensure_history_file_exists()
 
-    data = readHistory()
-    data[f"{key}"] = val
+        data = readHistory()
+        data[f"{key}"] = val
 
-    if not isinstance(data, dict):
-        return
+        if not isinstance(data, dict):
+            return
 
-    with open(histDir, "w") as file:
-        try:
-            json.dump(data, file, indent=4)
-        except Exception as e:
-            print(e)
+        with open(histDir, "w") as file:
+            try:
+                json.dump(data, file, indent=4)
+            except Exception as e:
+                print(e)
 
 
 def updateDB(key=None, arr=[]):
