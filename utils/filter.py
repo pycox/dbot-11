@@ -194,12 +194,11 @@ def readHistory(key=None):
         try:
             data = json.load(file)
 
-            return list(itertools.chain.from_iterable(data.values()))
+            if key is not None:
+                return list(itertools.chain.from_iterable(data.values()))
+                # return data.get(f"{key}", [])
 
-            # if key is not None:
-            #     return data.get(f"{key}", [])
-
-            # return data
+            return data
         except:
             return []
 
