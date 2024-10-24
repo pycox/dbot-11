@@ -1,8 +1,1 @@
-from .filter import (
-    readHistory,
-    updateHistory,
-    readUrl,
-    updateDB,
-    filterUrls,
-    getBotSpeed,
-)
+from .filter import readHistory, readUrl, updateDB, filterUrls, getBotSpeed, saveData

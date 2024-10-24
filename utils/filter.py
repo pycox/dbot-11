@@ -1,7 +1,6 @@
 import json
 from openpyxl import load_workbook, Workbook
 import os
-import itertools
 
 histDir = r"history.json"
 
@@ -11,16 +10,7 @@ dbXlDir = r"data.xlsx"
 
 cashData = {}
 
-rowHist = []
-
-try:
-    wb = load_workbook(dbXlDir)
-
-    ws = wb.active
-
-    rowHist = [cell.value.lower() for cell in ws["D"] if cell.value is not None]
-except:
-    rowHist = []
+data = []
 
 
 def ensure_history_file_exists():
@@ -195,67 +185,19 @@ def readHistory(key=None):
             data = json.load(file)
 
             if key is not None:
-                return list(itertools.chain.from_iterable(data.values()))
-                # return data.get(f"{key}", [])
+                return data.get(f"{key}", [])
 
             return data
         except:
             return []
 
 
-def updateHistory(key, val):
-    if key is not None:
-        ensure_history_file_exists()
-
-        data = readHistory()
-        data[f"{key}"] = val
-
-        if not isinstance(data, dict):
-            return
-
-        with open(histDir, "w") as file:
-            try:
-                json.dump(data, file, indent=4)
-            except Exception as e:
-                print(e)
-
-
-def updateDB(key=None, arr=[]):
+def updateDB(key, arr):
+    global data
     global cashData
-    global rowHist
-
-    if key is None:
-        keyList = sorted(list(cashData.keys()))
-
-        if os.path.exists(dbXlDir):
-            wb = load_workbook(dbXlDir)
-        else:
-            wb = Workbook()
-
-        if wb.active:
-            ws = wb.active
-        else:
-            ws = wb.create_sheet()
-
-        if ws["A1"] != "Job Title":
-            ws["A1"] = "Job Title"
-            ws["B1"] = "Company"
-            ws["C1"] = "Location"
-            ws["D1"] = "Url"
-
-        for key in keyList:
-            for row in cashData[key]:
-                ws.append(row)
-
-        wb.save(dbXlDir)
-
-        cashData = {}
-
-        return
 
     hist = readHistory(key)
     newHist = []
-    temp = []
 
     for item in arr:
         title, _, _, link = item
@@ -263,13 +205,44 @@ def updateDB(key=None, arr=[]):
         newHist.append(link)
 
         if not link in hist:
-            if not link in rowHist:
-                for job in fetchJobs():
-                    if job in title.lower():
-                        temp.append(item)
-                        rowHist.append(link)
-                        break
 
-    cashData[f"{key}"] = temp
+            for job in fetchJobs():
+                if job in title.lower():
+                    data.append(item)
+                    break
 
-    updateHistory(key, newHist)
+    cashData[f"{key}"] = newHist
+
+
+def saveData():
+    global data
+    global cashData
+
+    if os.path.exists(dbXlDir):
+        wb = load_workbook(dbXlDir)
+    else:
+        wb = Workbook()
+
+    if wb.active:
+        ws = wb.active
+    else:
+        ws = wb.create_sheet()
+
+    if ws["A1"] != "Job Title":
+        ws.append(["Job Title", "Company", "Location", "Url"])
+
+    for item in data:
+        ws.append(item)
+
+    wb.save(dbXlDir)
+
+    ensure_history_file_exists()
+
+    if not isinstance(cashData, dict):
+        return
+
+    with open(histDir, "w") as file:
+        try:
+            json.dump(cashData, file, indent=4)
+        except Exception as e:
+            print(e)
