@@ -10,7 +10,7 @@ dbXlDir = r"data.xlsx"
 
 cashData = {}
 
-data = []
+rowData = []
 
 
 def ensure_history_file_exists():
@@ -193,7 +193,7 @@ def readHistory(key=None):
 
 
 def updateDB(key, arr):
-    global data
+    global rowData
     global cashData
 
     hist = readHistory(key)
@@ -208,14 +208,14 @@ def updateDB(key, arr):
 
             for job in fetchJobs():
                 if job in title.lower():
-                    data.append(item)
+                    rowData.append(item)
                     break
 
     cashData[f"{key}"] = newHist
 
 
 def saveData():
-    global data
+    global rowData
     global cashData
 
     if os.path.exists(dbXlDir):
@@ -231,7 +231,7 @@ def saveData():
     if ws["A1"] != "Job Title":
         ws.append(["Job Title", "Company", "Location", "Url"])
 
-    for item in data:
+    for item in rowData:
         ws.append(item)
 
     wb.save(dbXlDir)
