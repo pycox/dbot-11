@@ -7,6 +7,7 @@ num_threads = getBotSpeed()
 
 def scraping(id, name, url, location):
     try:
+        print(f"=================================== {int(id / 600 * 10000) / 100.0}% ===================================")
         scrapper = importlib.import_module(f"scripts.scraper{id}")
         scrapper.main(id, name, url, location)
     except Exception as e:
