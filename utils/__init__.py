@@ -1,1 +1,9 @@
-from .filter import readHistory, readUrl, updateDB, filterUrls, getBotSpeed, saveData, fetchJobs
+from .filter import (
+    readHistory,
+    readUrl,
+    updateDB,
+    filterUrls,
+    getBotSpeed,
+    fetchJobs,
+    getLocations,
+)

@@ -1,6 +1,12 @@
 import json
 from openpyxl import load_workbook, Workbook
 import os
+from pymongo import MongoClient
+from datetime import datetime
+
+client = MongoClient("mongodb://localhost:27017/")
+db = client["dbot"]
+collection = db["leads"]
 
 histDir = r"history.json"
 
@@ -35,7 +41,7 @@ def getBotSpeed():
         return 4
 
 
-def getLocations(location):
+def getLocations(location=None):
     location_data = {
         "UK": (
             "UK",
@@ -150,7 +156,7 @@ def filterUrls():
             continue
 
         if row[3].value == "yes":
-            locations = getLocations(ws["G2"].value)
+            locations = getLocations()
             urls.append((row[0].value, row[1].value, row[2].value, locations))
 
     return urls
@@ -196,53 +202,23 @@ def updateDB(key, arr):
     global rowData
     global cashData
 
-    hist = readHistory(key)
-    newHist = []
-
     for item in arr:
-        title, _, _, link = item
+        title, company, location, link = item
 
-        newHist.append(link)
+        result = collection.update_one(
+            {"url": link},
+            {
+                "$set": {
+                    "num": key,
+                    "url": link,
+                    "company": company,
+                    "jobTitle": title,
+                    "location": location,
+                    "createdAt": datetime.now(),
+                }
+            },
+            upsert=True,
+        )
 
-        if not link in hist:
 
-            for job in fetchJobs():
-                if job in title.lower():
-                    rowData.append(item)
-                    break
-
-    cashData[f"{key}"] = newHist
-
-
-def saveData():
-    global rowData
-    global cashData
-
-    if os.path.exists(dbXlDir):
-        wb = load_workbook(dbXlDir)
-    else:
-        wb = Workbook()
-
-    if wb.active:
-        ws = wb.active
-    else:
-        ws = wb.create_sheet()
-
-    if ws["A1"] != "Job Title":
-        ws.append(["Job Title", "Company", "Location", "Url"])
-
-    for item in rowData:
-        ws.append(item)
-
-    wb.save(dbXlDir)
-
-    ensure_history_file_exists()
-
-    if not isinstance(cashData, dict):
-        return
-
-    with open(histDir, "w") as file:
-        try:
-            json.dump(cashData, file, indent=4)
-        except Exception as e:
-            print(e)
+# client.close()
