@@ -156,8 +156,7 @@ def filterUrls():
             continue
 
         if row[3].value == "yes":
-            locations = getLocations()
-            urls.append((row[0].value, row[1].value, row[2].value, locations))
+            urls.append((row[0].value, row[1].value, row[2].value))
 
     return urls
 
@@ -199,6 +198,8 @@ def readHistory(key=None):
 
 
 def updateDB(key, arr):
+    print("########", key, len(arr), arr)
+    
     global rowData
     global cashData
 
@@ -219,6 +220,10 @@ def updateDB(key, arr):
             },
             upsert=True,
         )
+
+
+def eventHander(key, tp):
+    print("@@@@@@@@", key, tp)
 
 
 # client.close()

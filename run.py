@@ -5,11 +5,11 @@ from utils import filterUrls, getBotSpeed
 num_threads = getBotSpeed()
 
 
-def scraping(id, name, url, location):
+def scraping(id, name, url):
     try:
         print(f"======== {int(id / 600 * 10000) / 100.0}% ========")
         scrapper = importlib.import_module(f"scripts.scraper{id}")
-        scrapper.main(id, name, url, location)
+        scrapper.main(id, name, url)
     except Exception as e:
         print(f"{name}: {e}")
 

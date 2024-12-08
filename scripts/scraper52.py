@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from utils import readUrl, updateDB
+from utils import updateDB, eventHander
 
 
 def main(key, com, url, locations):
