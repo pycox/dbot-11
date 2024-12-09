@@ -5,7 +5,7 @@ from utils import updateDB, eventHander
 import time
 
 
-def main(key, com, url, locations):
+def main(key, com, url):
     options = Options()
     options.add_argument("--log-level=3")
     options.add_argument("--headless")
@@ -13,35 +13,53 @@ def main(key, com, url, locations):
     options.add_argument("--no-sandbox")
     options.add_argument("--enable-unsafe-swiftshader")
     driver = webdriver.Chrome(options=options)
-    driver.get(url)
 
-    time.sleep(2)
-    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-    time.sleep(3)
+    try:
+        driver.get(url)
 
-    items = driver.find_elements(By.CSS_SELECTOR, ".Bloom__Tabs__tabsContent___T5H80 .Bloom__modifiers__cf___2jEl0")
-    data = []
+        time.sleep(2)
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        time.sleep(3)
 
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        title = item.find_element(By.CSS_SELECTOR, "h3").text.strip()
-        location = item.find_element(By.CSS_SELECTOR, "a p").text.strip()
+        driver.find_element(
+            By.CSS_SELECTOR,
+            ".Bloom__Tabs__tabsContent___T5H80 .Bloom__modifiers__cf___2jEl0",
+        )
+        items = driver.find_elements(
+            By.CSS_SELECTOR,
+            ".Bloom__Tabs__tabsContent___T5H80 .Bloom__modifiers__cf___2jEl0",
+        )
+        data = []
 
-        for str in locations:
-            if str in location:
-                data.append(
-                    [
-                        title,
-                        com,
-                        location,
-                        link,
-                    ]
-                )
-                break
+        for item in items:
+            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+            title = item.find_element(By.CSS_SELECTOR, "h3").text.strip()
+            location = item.find_element(By.CSS_SELECTOR, "a p").text.strip()
 
-    driver.quit()
+            data.append(
+                [
+                    title,
+                    com,
+                    location,
+                    link,
+                ]
+            )
 
-    updateDB(key, data)
+        driver.quit()
+
+        updateDB(key, data)
+    except Exception as e:
+        print(key, "========", e)
+        if "ERR_CONNECTION_TIMED_OUT" in str(e):
+            eventHander(key, "CONNFAILED")
+        elif "no such element" in str(e):
+            eventHander(key, "UPDATED")
+        elif "ERR_NAME_NOT_RESOLVED" in str(e):
+            eventHander(key, "CONNFAILED")
+        else:
+            eventHander(key, "UNKNOWN")
+    finally:
+        driver.quit()
 
 
 if __name__ == "__main__":

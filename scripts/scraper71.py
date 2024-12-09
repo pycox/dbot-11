@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 from utils import updateDB, eventHander
 
 
-def main(key, com, url, locations):
+def main(key, com, url):
 
     response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
@@ -23,14 +23,11 @@ def main(key, com, url, locations):
         )
 
         title_tag = item.select_one("h4")
-        
+
         if title_tag:
             title = title_tag.text.strip()
 
-        for str in locations:
-            if (str in location):
-                data.append([title, com, location, link])
-                break
+        data.append([title, com, location, link])
 
     updateDB(key, data)
 

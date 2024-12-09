@@ -5,7 +5,7 @@ from utils import updateDB, eventHander
 import time
 
 
-def main(key, com, url, locations):
+def main(key, com, url):
     options = Options()
     options.add_argument("--log-level=3")
     options.add_argument("--headless")
@@ -13,23 +13,26 @@ def main(key, com, url, locations):
     options.add_argument("--no-sandbox")
     options.add_argument("--enable-unsafe-swiftshader")
     driver = webdriver.Chrome(options=options)
-    driver.get(url)
-
-    time.sleep(4)
 
     try:
-        driver.find_element(
-            By.CSS_SELECTOR,
-            "button#privacy-cookies-accept",
-        ).click()
-    except Exception as e:
-        print(f"Scraper{key} cookiee button: {e}")
+        driver.get(url)
 
-    time.sleep(4)
+        time.sleep(4)
 
-    data = []
+        try:
+            driver.find_element(
+                By.CSS_SELECTOR,
+                "button#privacy-cookies-accept",
+            ).click()
+        except Exception as e:
+            print(f"{key} ==== cookiee button ====: {e}")
+            eventHander(key, "ELEMENT")
 
-    if "UK" in locations:
+        time.sleep(4)
+
+        data = []
+
+        driver.find_element(By.CSS_SELECTOR, "h2#current-vacancies")
         items = driver.find_elements(By.CSS_SELECTOR, "li.vacancy-item-new")
 
         for item in items:
@@ -37,6 +40,7 @@ def main(key, com, url, locations):
             location = item.find_element(
                 By.XPATH, "//dd[contains(text(), 'Location')]/following-sibling::dt"
             ).text.strip()
+
             data.append(
                 [
                     item.find_element(By.CSS_SELECTOR, "h2").text.strip(),
@@ -45,10 +49,20 @@ def main(key, com, url, locations):
                     link,
                 ]
             )
-        
-    driver.quit()
 
-    updateDB(key, data)
+        updateDB(key, data)
+    except Exception as e:
+        print(key, "========", e)
+        if "ERR_CONNECTION_TIMED_OUT" in str(e):
+            eventHander(key, "CONNFAILED")
+        elif "no such element" in str(e):
+            eventHander(key, "UPDATED")
+        elif "ERR_NAME_NOT_RESOLVED" in str(e):
+            eventHander(key, "CONNFAILED")
+        else:
+            eventHander(key, "UNKNOWN")
+    finally:
+        driver.quit()
 
 
 if __name__ == "__main__":

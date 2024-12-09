@@ -1,9 +1,9 @@
 import requests
 from bs4 import BeautifulSoup
-from utils import updateDB, eventHander
+from utils import updateDB
 
 
-def main(key, com, url, locations):
+def main(key, com, url):
     response = requests.get(url)
     html_content = response.text
 
@@ -11,19 +11,19 @@ def main(key, com, url, locations):
 
     data = []
 
-    if "UK" in locations:
-        items = soup.select("div.toptext")
-        for item in items:
-            link = item.select_one("a")["href"].strip()
+    items = soup.select("div.toptext")
+    
+    for item in items:
+        link = item.select_one("a")["href"].strip()
 
-            data.append(
-                [
-                    item.select_one("h4.xs-heading").text.strip(),
-                    com,
-                    "UK",
-                    f"{url}{link}",
-                ]
-            )
+        data.append(
+            [
+                item.select_one("h4.xs-heading").text.strip(),
+                com,
+                "UK",
+                f"{url}{link}",
+            ]
+        )
 
     updateDB(key, data)
 

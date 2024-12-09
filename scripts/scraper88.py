@@ -5,7 +5,7 @@ from utils import updateDB, eventHander
 import time
 
 
-def main(key, com, url, locations):
+def main(key, com, url):
     options = Options()
     options.add_argument("--log-level=3")
     options.add_argument("--headless")
@@ -13,52 +13,72 @@ def main(key, com, url, locations):
     options.add_argument("--no-sandbox")
     options.add_argument("--enable-unsafe-swiftshader")
     driver = webdriver.Chrome(options=options)
-    driver.get(url)
 
-    flag = True
-    data = []
+    try:
+        driver.get(url)
 
-    while flag:
-        try:
-            time.sleep(4)
+        flag = True
+        data = []
 
-            items = driver.find_elements(By.CSS_SELECTOR, "div.result")
+        tmp = driver.find_elements(By.XPATH, "//p[contains(text(), 'There are no roles currently available for the search criteria provided above.')]")
 
-            for item in items:
-                link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
-                location = (
-                    item.find_element(
-                        By.XPATH, ".//strong[contains(text(), 'Location')]"
-                    )
-                    .find_element(By.XPATH, "..")
-                    .text.strip()
-                )
-                location = location.split(":")[-1].strip()
-                for str in locations:
-                    if (str in location):
-                        data.append(
-                            [
-                                item.find_element(
-                                    By.CSS_SELECTOR, "div.card-header"
-                                ).text.strip(),
-                                com,
-                                str,
-                                link,
-                            ]
+        if len(tmp):
+            updateDB(key, data)
+            return
+
+        driver.find_element(By.CSS_SELECTOR, "div.result")
+
+        while flag:
+            try:
+                time.sleep(4)
+
+                items = driver.find_elements(By.CSS_SELECTOR, "div.result")
+
+                for item in items:
+                    link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
+                    location = (
+                        item.find_element(
+                            By.XPATH, ".//strong[contains(text(), 'Location')]"
                         )
-                        break
+                        .find_element(By.XPATH, "..")
+                        .text.strip()
+                    )
+                    location = location.split(":")[-1].strip()
 
-            nextBtn = driver.find_element(By.XPATH, "//a[contains(text(), '›')]")
+                    data.append(
+                        [
+                            item.find_element(
+                                By.CSS_SELECTOR, "div.card-header"
+                            ).text.strip(),
+                            com,
+                            str,
+                            link,
+                        ]
+                    )
 
-            if nextBtn.is_enabled():
-                nextBtn.click()
-            else:
+                nextBtn = driver.find_element(By.XPATH, "//a[contains(text(), '›')]")
+
+                if nextBtn.is_enabled():
+                    nextBtn.click()
+                else:
+                    flag = False
+                    break
+            except Exception as e:
                 flag = False
-                break
-        except Exception as e:
-            flag = False
 
-    updateDB(key, data)
+        updateDB(key, data)
+    except Exception as e:
+        print(key, "========", e)
+        if "ERR_CONNECTION_TIMED_OUT" in str(e):
+            eventHander(key, "CONNFAILED")
+        elif "no such element" in str(e):
+            eventHander(key, "UPDATED")
+        elif "ERR_NAME_NOT_RESOLVED" in str(e):
+            eventHander(key, "CONNFAILED")
+        else:
+            eventHander(key, "UNKNOWN")
+    finally:
+        driver.quit()
 
 
 if __name__ == "__main__":

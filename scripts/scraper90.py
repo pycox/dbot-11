@@ -1,9 +1,9 @@
 import requests
 from bs4 import BeautifulSoup
-from utils import updateDB, eventHander
+from utils import updateDB
 
 
-def main(key, com, url, locations):
+def main(key, com, url):
     response = requests.get(url)
     html_content = response.text
 
@@ -16,17 +16,15 @@ def main(key, com, url, locations):
     for item in items:
         link = item.select_one("a")["href"].strip()
         location = item.select_one("li.results-job-location").text.strip()
-        for str in locations:
-            if (str in location):
-                data.append(
-                    [
-                        item.select_one("div.job-title").text.strip(),
-                        com,
-                        location,
-                        link,
-                    ]
-                )
-                break
+
+        data.append(
+            [
+                item.select_one("div.job-title").text.strip(),
+                com,
+                location,
+                link,
+            ]
+        )
 
     updateDB(key, data)
 
