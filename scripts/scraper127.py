@@ -6,7 +6,7 @@ from utils import updateDB, eventHander
 import time
 
 
-def main(key, com, url, locations):
+def main(key, com, url):
 
     options = Options()
     options.add_argument("--log-level=3")
@@ -15,26 +15,43 @@ def main(key, com, url, locations):
     options.add_argument("--no-sandbox")
     options.add_argument("--enable-unsafe-swiftshader")
     driver = webdriver.Chrome(options=options)
-    driver.get(url)
 
-    time.sleep(3)
+    try:
+        driver.get(url)
 
-    data = []
-    
-    items = driver.find_elements(By.CSS_SELECTOR, "div.l-content__body li a")
-    for item in items:
-        data.append(
-            [
-                driver.execute_script("return arguments[0].innerText;", item.find_element(By.CSS_SELECTOR, "strong u")).strip(),
-                com,
-                "US",
-                item.get_attribute("href").strip(),
-            ]
-        )
+        time.sleep(3)
 
+        data = []
 
-    driver.quit()
-    updateDB(key, data)
+        items = driver.find_elements(By.CSS_SELECTOR, "div.l-content__body li a")
+        driver.find_element(By.CSS_SELECTOR, "div.l-content__body li a")
+
+        for item in items:
+            data.append(
+                [
+                    driver.execute_script(
+                        "return arguments[0].innerText;",
+                        item.find_element(By.CSS_SELECTOR, "strong u"),
+                    ).strip(),
+                    com,
+                    "US",
+                    item.get_attribute("href").strip(),
+                ]
+            )
+
+        updateDB(key, data)
+    except Exception as e:
+        print(key, "========", e)
+        if "ERR_CONNECTION_TIMED_OUT" in str(e):
+            eventHander(key, "CONNFAILED")
+        elif "no such element" in str(e):
+            eventHander(key, "UPDATED")
+        elif "ERR_NAME_NOT_RESOLVED" in str(e):
+            eventHander(key, "CONNFAILED")
+        else:
+            eventHander(key, "UNKNOWN")
+    finally:
+        driver.quit()
 
 
 if __name__ == "__main__":

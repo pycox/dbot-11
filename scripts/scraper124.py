@@ -6,7 +6,7 @@ import time
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-def main(key, com, url, locations):
+def main(key, com, url):
 
     options = Options()
     options.add_argument("--log-level=3")
@@ -15,34 +15,37 @@ def main(key, com, url, locations):
     options.add_argument("--no-sandbox")
     options.add_argument("--enable-unsafe-swiftshader")
     driver = webdriver.Chrome(options=options)
-    driver.get(url)
 
-    time.sleep(4)
+    try:
+        driver.get(url)
 
-    iframe = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "frame[title=\"Site content frame\"]")))
-    driver.switch_to.frame(iframe)
-
-    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-
-    time.sleep(4)
-
-    flag = True
-    while flag:
         time.sleep(4)
-        try:
-            button = driver.find_element(By.CSS_SELECTOR, "button.Mhr-jobSearchMoreResultsButton")
-            driver.execute_script("arguments[0].scrollIntoView();", button)
-            button.click()
-        except Exception as e:
-            print(e)
-            flag = False
+
+        iframe = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "frame[title=\"Site content frame\"]")))
+        driver.switch_to.frame(iframe)
+
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+        time.sleep(4)
+
+        flag = True
+
+        while flag:
+            time.sleep(4)
+            try:
+                button = driver.find_element(By.CSS_SELECTOR, "button.Mhr-jobSearchMoreResultsButton")
+                driver.execute_script("arguments[0].scrollIntoView();", button)
+                button.click()
+            except Exception as e:
+                flag = False
 
 
-    data = []
+        data = []
 
-    
-    if "UK" in locations:
+        
+        driver.find_element(By.CSS_SELECTOR, ".Mhr-jobSearchJobs .Mhr-jobDetail")
         items = driver.find_elements(By.CSS_SELECTOR, ".Mhr-jobSearchJobs .Mhr-jobDetail")
+
         for item in items:
             data.append(
                 [
@@ -53,9 +56,19 @@ def main(key, com, url, locations):
                 ]
             )
 
-    driver.quit()
-
-    updateDB(key, data)
+        updateDB(key, data)
+    except Exception as e:
+        print(key, "========", e)
+        if "ERR_CONNECTION_TIMED_OUT" in str(e):
+            eventHander(key, "CONNFAILED")
+        elif "no such element" in str(e):
+            eventHander(key, "UPDATED")
+        elif "ERR_NAME_NOT_RESOLVED" in str(e):
+            eventHander(key, "CONNFAILED")
+        else:
+            eventHander(key, "UNKNOWN")
+    finally:
+        driver.quit()
 
 
 if __name__ == "__main__":

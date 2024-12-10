@@ -1,45 +1,37 @@
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
+import requests
 from utils import updateDB, eventHander
-import time
+import json
 
 
-def main(key, com, url, locations):
+def main(key, com, url):
+    try:
+        response = requests.get("https://scopegroup.bamboohr.com/careers/list")
 
-    options = Options()
-    options.add_argument("--log-level=3")
-    options.add_argument("--headless")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--enable-unsafe-swiftshader")
-    driver = webdriver.Chrome(options=options)
-    driver.get(url)
+        data = []
 
-    time.sleep(4)
+        obj = json.loads(response.text)
 
-    items = driver.find_elements(By.CSS_SELECTOR, ".fab-Card.fab-Card--sizeFull ul li")
+        result = obj.get("result", [])
 
-    data = []
+        for post in result:
+            title = post.get("jobOpeningName")
+            link = post.get("id")
+            location = post.get("departmentLabel")
 
-    for item in items:
-        location = item.find_elements(By.CSS_SELECTOR, "p")[1].text.strip()
-        for str in locations:
-            if (str in location):
-                link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-                data.append(
-                    [
-                        item.find_element(By.CSS_SELECTOR, "a").text.strip(),
-                        com,
-                        location,
-                        link,
-                    ]
-                )
-                break
+            data.append(
+                [
+                    title,
+                    com,
+                    location,
+                    f"https://scopegroup.bamboohr.com/careers/{link}",
+                ]
+            )
 
-    driver.quit()
-    
-    updateDB(key, data)
+        updateDB(key, data)
+
+    except Exception as e:
+        print(key, "========", e)
+        eventHander(key, "CONNFAILED")
 
 
 if __name__ == "__main__":
