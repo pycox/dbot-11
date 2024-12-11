@@ -3,65 +3,72 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from utils import updateDB, eventHander
 import time
+from bs4 import BeautifulSoup
 
 
-def main(key, com, url, locations):
-
+def main(key, com, url):
     options = Options()
+    
     options.add_argument("--log-level=3")
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("--enable-unsafe-swiftshader")
+    options.add_argument(
+        "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
+    )
+
     driver = webdriver.Chrome(options=options)
-    driver.get(url)
-
-    time.sleep(4)
-    
-    regions = []
-    
-    if "UK" in locations:
-        regions.append("UK")
-
-    if "US" in locations:
-        regions.append("US")
-
 
     try:
-        # driver.find_element(By.CSS_SELECTOR, "input.js-consent-all-submit").click()
-        driver.find_element(By.CSS_SELECTOR, "button#onetrust-accept-btn-handler").click()
+        driver.get(url)
+
+        time.sleep(4)
+
+        try:
+            driver.find_element(
+                By.CSS_SELECTOR, "button#onetrust-accept-btn-handler"
+            ).click()
+        except Exception as e:
+            print(f"{key} ==== cookiee button ====: {e}")
+            eventHander(key, "ELEMENT")
+
+        data = []
+
+        driver.find_element(By.CSS_SELECTOR, "li.job")
+
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+
+        items = soup.select("li.job")
+
+        data = []
+
+        for item in items:
+            link = item.select_one("a").get("href").strip()
+
+            data.append(
+                [
+                    item.select_one("a").text.strip().replace("\n", ""),
+                    com,
+                    item.select_one("div.job__details").text.strip().replace("\n", ""),
+                    link,
+                ]
+            )
+
+        updateDB(key, data)
     except Exception as e:
-        print(f"Scraper{key} cookie Button: {e}")
+        print(key, "========", e)
+        if "ERR_CONNECTION_TIMED_OUT" in str(e):
+            eventHander(key, "CONNFAILED")
+        elif "no such element" in str(e):
+            eventHander(key, "UPDATED")
+        elif "ERR_NAME_NOT_RESOLVED" in str(e):
+            eventHander(key, "CONNFAILED")
+        else:
+            eventHander(key, "UNKNOWN")
+    finally:
+        driver.quit()
 
-    data = []
-    items = len(driver.find_elements(By.CSS_SELECTOR, "div.jobs-listing > a.cmp-jobs__list--links"))
-
-
-    for i in range(0, items):
-        item = driver.find_elements(By.CSS_SELECTOR, "div.jobs-listing > a.cmp-jobs__list--links")[i]
-        
-        title = item.find_element(
-            By.CSS_SELECTOR, "span.cmp-jobs__list--content.title"
-        ).text.strip()
-
-        country = item.find_element(
-            By.CSS_SELECTOR, "span.cmp-jobs__list--content:first-child"
-        ).text.strip()
-
-        location = item.find_element(
-            By.CSS_SELECTOR, "span.location"
-        ).text.strip()
-
-        link = item.get_attribute('href').strip()
-
-        if country.strip() in regions and country:
-            data.append([title, com, country + ' ' + location, link])
-
-        time.sleep(1)
-            
-    driver.quit()
-
-    updateDB(key, data)
 
 if __name__ == "__main__":
     main()

@@ -5,34 +5,44 @@ from utils import updateDB, eventHander
 import time
 
 
-def main(key, com, url, locations):
-
+def main(key, com, url):
     options = Options()
+    
     options.add_argument("--log-level=3")
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("--enable-unsafe-swiftshader")
-    driver = webdriver.Chrome(options=options)
-    driver.get(url)
+    options.add_argument(
+        "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
+    )
 
-    time.sleep(2)
+    driver = webdriver.Chrome(options=options)
 
     try:
+        driver.get(url)
+
+        time.sleep(2)
+
+        try:
+            driver.find_element(
+                By.CSS_SELECTOR,
+                "#onetrust-accept-btn-handler",
+            ).click()
+        except Exception as e:
+            print(f"{key} ==== cookiee button ====: {e}")
+            eventHander(key, "ELEMENT")
+
+        time.sleep(2)
+
+        data = []
+
         driver.find_element(
-            By.CSS_SELECTOR,
-            "#onetrust-accept-btn-handler",
-        ).click()
-    except Exception as e:
-        print(f"Scraper{key} cookiee button: {e}")
-
-    time.sleep(2)
-
-    data = []
-
-    if "UK" in locations:
-        items = driver.find_elements(By.CSS_SELECTOR, ".row-full-width-inner div[data-content-type=\"text\"]")
-
+            By.CSS_SELECTOR, '.row-full-width-inner div[data-content-type="text"]'
+        )
+        items = driver.find_elements(
+            By.CSS_SELECTOR, '.row-full-width-inner div[data-content-type="text"]'
+        )
 
         for item in items:
             try:
@@ -42,7 +52,11 @@ def main(key, com, url, locations):
                 if not title:
                     continue
                 title = title.split("\n")[0].split(":")[1].strip()
-                link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+                link = (
+                    item.find_element(By.CSS_SELECTOR, "a")
+                    .get_attribute("href")
+                    .strip()
+                )
             except:
                 continue
 
@@ -55,9 +69,19 @@ def main(key, com, url, locations):
                 ]
             )
 
-    driver.quit()
-
-    updateDB(key, data)
+        updateDB(key, data)
+    except Exception as e:
+        print(key, "========", e)
+        if "ERR_CONNECTION_TIMED_OUT" in str(e):
+            eventHander(key, "CONNFAILED")
+        elif "no such element" in str(e):
+            eventHander(key, "UPDATED")
+        elif "ERR_NAME_NOT_RESOLVED" in str(e):
+            eventHander(key, "CONNFAILED")
+        else:
+            eventHander(key, "UNKNOWN")
+    finally:
+        driver.quit()
 
 
 if __name__ == "__main__":

@@ -1,67 +1,48 @@
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
+import requests
 from utils import updateDB, eventHander
-import time
+import json
 
 
-def main(key, com, url, locations):
-
-    options = Options()
-    options.add_argument("--log-level=3")
-    options.add_argument("--headless")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--enable-unsafe-swiftshader")
-    driver = webdriver.Chrome(options=options)
-    driver.get(url)
-
-    time.sleep(4)
-
+def main(key, com, url):
     try:
-        driver.find_element(By.CSS_SELECTOR, "button#truste-consent-button").click()
+        headers = {
+            "Content-Type": "application/json",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
+        }
+
+        response = requests.get(
+            url="https://cg-job-search-microservices.azurewebsites.net/api/job-search?page=1&size=10000",
+            verify=False,
+            headers=headers,
+            timeout=500,
+        )
+
+        data = []
+
+        obj = json.loads(response.text)
+
+        result = obj.get("data", [])
+
+        for post in result:
+            title = post.get("title")
+            link = post.get("apply_job_url")
+            location = post.get("location")
+            country_code = post.get("country_code")
+
+            data.append(
+                [
+                    title,
+                    com,
+                    f"{country_code} - {location}",
+                    link,
+                ]
+            )
+
+        updateDB(key, data)
+
     except Exception as e:
-        print(f"Scraper{key} cookiee button: {e}")
-
-    flag = True
-
-    while flag:
-        try:
-            button = driver.find_element(By.CSS_SELECTOR, "a[aria-label=\"Load More about jobs\"]")
-            driver.execute_script("arguments[0].scrollIntoView();", button)
-            time.sleep(2)
-            driver.execute_script("arguments[0].click();", button)
-            time.sleep(4)
-        except:
-            flag = False
-            break
-
-    data = []
-
-    items = driver.find_elements(By.CSS_SELECTOR, "a.filter-box")
-
-    for item in items:
-        link = item.get_attribute("href").strip()
-        location = item.find_element(
-            By.XPATH,
-            ".//span[contains(text(), 'Location')]/following-sibling::div",
-        ).text.strip()
-        for str in locations:
-            if (str in location):
-
-                data.append(
-                    [
-                        item.find_element(By.CSS_SELECTOR, "div.table-title").text.strip(),
-                        com,
-                        location,
-                        link,
-                    ]
-                )
-                break
-
-    driver.quit()
-
-    updateDB(key, data)
+        print(key, "========", e)
+        eventHander(key, "CONNFAILED")
 
 
 if __name__ == "__main__":

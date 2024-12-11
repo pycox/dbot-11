@@ -5,76 +5,84 @@ from utils import updateDB, eventHander
 import time
 
 
-def main(key, com, url, locations):
-
+def main(key, com, url):
     options = Options()
+    
     options.add_argument("--log-level=3")
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("--enable-unsafe-swiftshader")
+    options.add_argument(
+        "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
+    )
+
     driver = webdriver.Chrome(options=options)
-    driver.get(url)
-
-    flag = True
-    data = []
-
-    time.sleep(4)
 
     try:
-        driver.find_element(
-            By.CSS_SELECTOR, "button#didomi-notice-agree-button"
-        ).click()
-    except Exception as e:
-        print(f"Scraper{key} cookiee button: {e}")
-        
-    while flag:
+        driver.get(url)
+
+        flag = True
+        data = []
+
+        time.sleep(8)
+
         try:
-            time.sleep(4)
+            driver.find_element(
+                By.CSS_SELECTOR, "button#didomi-notice-agree-button"
+            ).click()
+        except Exception as e:
+            print(f"Scraper{key} cookiee button: {e}")
 
-            items = driver.find_elements(By.CSS_SELECTOR, "li.ts-offer-list-item")
+        while flag:
+            try:
+                time.sleep(4)
 
-            for item in items:
-                link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
-                location = item.find_element(
-                    By.CSS_SELECTOR, "li.noBorder"
-                ).text.strip()
+                items = driver.find_elements(By.CSS_SELECTOR, "li.ts-offer-list-item")
 
-                for str in locations:
-                    if str in location:
+                for item in items:
+                    link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
+                    location = item.find_element(
+                        By.CSS_SELECTOR, "li.noBorder"
+                    ).text.strip()
 
-                        data.append(
-                            [
-                                item.find_element(
-                                    By.CSS_SELECTOR, "h3.ts-offer-list-item__title"
-                                ).text.strip(),
-                                com,
-                                location,
-                                link,
-                            ]
-                        )
+                    data.append(
+                        [
+                            item.find_element(
+                                By.CSS_SELECTOR, "h3.ts-offer-list-item__title"
+                            ).text.strip(),
+                            com,
+                            location,
+                            link,
+                        ]
+                    )
 
-                        break
+                nextBtn = driver.find_elements(
+                    By.CSS_SELECTOR, "a.ts-ol-pagination-list-item__link--next"
+                )
 
-            nextBtn = driver.find_elements(
-                By.CSS_SELECTOR, "a.ts-ol-pagination-list-item__link--next"
-            )
+                if len(nextBtn) > 0:
 
-            if len(nextBtn) > 0:
-
-                nextBtn[0].click()
-            else:
+                    nextBtn[0].click()
+                else:
+                    flag = False
+                    break
+            except:
                 flag = False
-                break
-        except:
-            flag = False
 
-    driver.quit()
-    
-    print(data)
-    return
-
-    updateDB(key, data)
+        updateDB(key, data)
+    except Exception as e:
+        print(key, "========", e)
+        if "ERR_CONNECTION_TIMED_OUT" in str(e):
+            eventHander(key, "CONNFAILED")
+        elif "no such element" in str(e):
+            eventHander(key, "UPDATED")
+        elif "ERR_NAME_NOT_RESOLVED" in str(e):
+            eventHander(key, "CONNFAILED")
+        else:
+            eventHander(key, "UNKNOWN")
+    finally:
+        driver.quit()
 
 
 if __name__ == "__main__":
