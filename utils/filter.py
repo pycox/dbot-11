@@ -198,8 +198,16 @@ def readHistory(key=None):
 
 
 def updateDB(key, arr):
-    print("########", key, len(arr), arr)
-    
+    print(
+        "########",
+        f".{key}.",
+        f"[{len(arr)}]",
+        arr,
+        "########",
+        f".{key}.",
+        f"[{len(arr)}]",
+    )
+
     global rowData
     global cashData
 

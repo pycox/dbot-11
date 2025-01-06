@@ -32,17 +32,14 @@ def main(key, com, url):
         link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
         location = item.find_element(By.CSS_SELECTOR, '.BambooHR-ATS-Location').text.strip()
 
-        for str in locations:
-            if (str in location):
-                data.append(
-                    [
-                        item.find_element(By.CSS_SELECTOR, "a").text.strip(),
-                        com,
-                        location,
-                        link,
-                    ]
-                )
-                break
+        data.append(
+            [
+                item.find_element(By.CSS_SELECTOR, "a").text.strip(),
+                com,
+                location,
+                link,
+            ]
+        )
 
     driver.quit()
 

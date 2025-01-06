@@ -7,7 +7,7 @@ import time
 
 def main(key, com, url):
     options = Options()
-    
+
     options.add_argument("--log-level=3")
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
@@ -16,22 +16,33 @@ def main(key, com, url):
     options.add_argument(
         "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
     )
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument("--start-maximized")
 
     driver = webdriver.Chrome(options=options)
-    driver.get(url)
 
-    time.sleep(4)
+    try:
+        driver.get(url)
 
+        driver.set_page_load_timeout(100)
 
-    data = []
+        time.sleep(4)
 
-    if "UK" in locations:
-    
+        data = []
+
         flag = True
+
+        driver.find_element(By.CSS_SELECTOR, "div.jobs-card")
+
         while flag:
             items = driver.find_elements(By.CSS_SELECTOR, "div.jobs-card")
+
             for item in items:
-                link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+                link = (
+                    item.find_element(By.CSS_SELECTOR, "a")
+                    .get_attribute("href")
+                    .strip()
+                )
                 data.append(
                     [
                         item.find_element(By.CSS_SELECTOR, "h3").text.strip(),
@@ -42,19 +53,37 @@ def main(key, com, url):
                 )
 
             try:
-                curr_button = int(driver.find_element(By.CSS_SELECTOR, 'li.active a.page-update').text.strip())
-                next_button = driver.find_element(By.CSS_SELECTOR, f'li a[data-page="{curr_button+1}"]')
+                curr_button = int(
+                    driver.find_element(
+                        By.CSS_SELECTOR, "li.active a.page-update"
+                    ).text.strip()
+                )
+                next_button = driver.find_element(
+                    By.CSS_SELECTOR, f'li a[data-page="{curr_button+1}"]'
+                )
                 driver.execute_script("arguments[0].click();", next_button)
-                
-                time.sleep(6)
+
+                driver.set_page_load_timeout(100)
+
+                time.sleep(4)
             except Exception as e:
                 flag = False
-                print("No More Jobs", e)
-            
 
-    driver.quit()
-
-    updateDB(key, data)
+        updateDB(key, data)
+    except Exception as e:
+        print(key, "========", e)
+        if "ERR_CONNECTION_TIMED_OUT" in str(e):
+            eventHander(key, "CONNFAILED")
+        elif "no such element" in str(e):
+            eventHander(key, "UPDATED")
+        elif "ERR_NAME_NOT_RESOLVED" in str(e):
+            eventHander(key, "CONNFAILED")
+        elif "Timed out" in str(e):
+            eventHander(key, "CONNFAILED")
+        else:
+            eventHander(key, "UNKNOWN")
+    finally:
+        driver.quit()
 
 
 if __name__ == "__main__":

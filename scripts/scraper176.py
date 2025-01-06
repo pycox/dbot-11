@@ -10,7 +10,7 @@ import time
 
 def main(key, com, url):
     options = Options()
-    
+
     options.add_argument("--log-level=3")
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
@@ -21,38 +21,55 @@ def main(key, com, url):
     )
 
     driver = webdriver.Chrome(options=options)
-    driver.get(url)
 
-    time.sleep(4)
-    iframe = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".careers-page iframe")))
-    driver.switch_to.frame(iframe)
-    driver.execute_script("arguments[0].scrollIntoView();", driver.find_element(By.CSS_SELECTOR, "#benefits"))
+    try:
+        driver.get(url)
 
-    time.sleep(4)
+        time.sleep(4)
+        iframe = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, ".careers-page iframe"))
+        )
+        driver.switch_to.frame(iframe)
+        driver.execute_script(
+            "arguments[0].scrollIntoView();",
+            driver.find_element(By.CSS_SELECTOR, "#benefits"),
+        )
 
-    data = []
+        time.sleep(4)
 
-    items = driver.find_elements(By.CSS_SELECTOR, ".open-pos--single-block")
-    for item in items:
-        title = item.find_element(By.CSS_SELECTOR, 'h1').text.strip()
-        sub_items = item.find_elements(By.CSS_SELECTOR, "div[role='listitem'] a")
-        for sub_item in sub_items:
-            location = sub_item.find_element(By.CSS_SELECTOR, 'div').text.strip()
-            for str in locations:
-                if (str in location):
-                    data.append(
-                        [
-                            title,
-                            com,
-                            location,
-                            sub_item.get_attribute("href").strip(),
-                        ]
-                    )
-                    break
+        data = []
 
-    driver.quit()
+        driver.find_element(By.CSS_SELECTOR, ".open-pos--single-block")
+        items = driver.find_elements(By.CSS_SELECTOR, ".open-pos--single-block")
 
-    updateDB(key, data)
+        for item in items:
+            title = item.find_element(By.CSS_SELECTOR, "h1").text.strip()
+            sub_items = item.find_elements(By.CSS_SELECTOR, "div[role='listitem'] a")
+            for sub_item in sub_items:
+                location = sub_item.find_element(By.CSS_SELECTOR, "div").text.strip()
+
+                data.append(
+                    [
+                        title,
+                        com,
+                        location,
+                        sub_item.get_attribute("href").strip(),
+                    ]
+                )
+
+        updateDB(key, data)
+    except Exception as e:
+        print(key, "========", e)
+        if "ERR_CONNECTION_TIMED_OUT" in str(e):
+            eventHander(key, "CONNFAILED")
+        elif "no such element" in str(e):
+            eventHander(key, "UPDATED")
+        elif "ERR_NAME_NOT_RESOLVED" in str(e):
+            eventHander(key, "CONNFAILED")
+        else:
+            eventHander(key, "UNKNOWN")
+    finally:
+        driver.quit()
 
 
 if __name__ == "__main__":
