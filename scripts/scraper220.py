@@ -7,7 +7,7 @@ import time
 
 def main(key, com, url):
     options = Options()
-    
+
     options.add_argument("--log-level=3")
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
@@ -18,38 +18,58 @@ def main(key, com, url):
     )
 
     driver = webdriver.Chrome(options=options)
-    driver.get(url)
 
-    time.sleep(4)
+    try:
+        driver.get(url)
 
-    flag = True
-    while flag:
-      try:
-        driver.find_element(By.CSS_SELECTOR, "div.flex.justify-center > button").click()
         time.sleep(4)
-      except:
-        flag = False
-        print("No more load button")
 
+        flag = True
 
-    data = []
-    
-    if "UK" in locations:
-        items = driver.find_elements(By.CSS_SELECTOR, "div.comp-listing-vacancy_vacancy_item__RGJz4.vacancy-item")
+        while flag:
+            try:
+                driver.find_element(
+                    By.CSS_SELECTOR, "div.flex.justify-center > button"
+                ).click()
+                time.sleep(4)
+            except:
+                flag = False
+
+        data = []
+
+        driver.find_element(
+            By.CSS_SELECTOR, "div.comp-listing-vacancy_vacancy_item__RGJz4.vacancy-item"
+        )
+        items = driver.find_elements(
+            By.CSS_SELECTOR, "div.comp-listing-vacancy_vacancy_item__RGJz4.vacancy-item"
+        )
+
         for item in items:
             link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
             data.append(
                 [
-                    item.find_element(By.CSS_SELECTOR, "div.fs-title-4.text-greenDark.ss-sp-40").text.strip(),
+                    item.find_element(
+                        By.CSS_SELECTOR, "div.fs-title-4.text-greenDark.ss-sp-40"
+                    ).text.strip(),
                     com,
                     "UK",
                     link,
                 ]
             )
 
-    driver.quit()
-
-    updateDB(key, data)
+        updateDB(key, data)
+    except Exception as e:
+        print(key, "========", e)
+        if "ERR_CONNECTION_TIMED_OUT" in str(e):
+            eventHander(key, "CONNFAILED")
+        elif "no such element" in str(e):
+            eventHander(key, "UPDATED")
+        elif "ERR_NAME_NOT_RESOLVED" in str(e):
+            eventHander(key, "CONNFAILED")
+        else:
+            eventHander(key, "UNKNOWN")
+    finally:
+        driver.quit()
 
 
 if __name__ == "__main__":

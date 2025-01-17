@@ -7,7 +7,7 @@ import time
 
 def main(key, com, url):
     options = Options()
-    
+
     options.add_argument("--log-level=3")
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
@@ -18,44 +18,65 @@ def main(key, com, url):
     )
 
     driver = webdriver.Chrome(options=options)
-    driver.get(url)
+    try:
+        driver.get(url)
 
-    time.sleep(4)
-
-    data = []
-    flag = True
-    while flag:
-      time.sleep(4)
-      items = driver.find_elements(By.CSS_SELECTOR, "li.jobs-list-item")
-      for item in items:
-          try:
-            link = item.find_element(By.CSS_SELECTOR, "a[data-ph-at-id='job-link']").get_attribute("href").strip()
-            location = item.find_element(By.CSS_SELECTOR, 'span[data-ph-id="ph-page-element-page11-z1v2dX"]').text.strip()
-
-            for str in locations:
-                if (str in location):
-                    data.append(
-                        [
-                            item.find_element(By.CSS_SELECTOR, "span[data-ph-id='ph-page-element-page11-Bsl6iT']").text.strip(),
-                            com,
-                            location,
-                            link,
-                        ]
-                    )
-                    break
-          except:
-            print("No Job")
-
-      try:
-        driver.find_element(By.CSS_SELECTOR, "a.next-btn.au-target").click()
         time.sleep(4)
-      except:
-        flag = False
-        print("No more pages")
 
-    driver.quit()
+        data = []
 
-    updateDB(key, data)
+        flag = True
+
+        driver.find_element(By.CSS_SELECTOR, "li.jobs-list-item")
+
+        while flag:
+
+            time.sleep(4)
+
+            items = driver.find_elements(By.CSS_SELECTOR, "li.jobs-list-item")
+
+            for item in items:
+                link = (
+                    item.find_element(By.CSS_SELECTOR, "a[data-ph-at-id='job-link']")
+                    .get_attribute("href")
+                    .strip()
+                )
+                location = item.find_element(
+                    By.CSS_SELECTOR,
+                    'span[data-ph-id="ph-page-element-page11-z1v2dX"]',
+                ).text.strip()
+
+                data.append(
+                    [
+                        item.find_element(
+                            By.CSS_SELECTOR,
+                            "span[data-ph-id='ph-page-element-page11-Bsl6iT']",
+                        ).text.strip(),
+                        com,
+                        location,
+                        link,
+                    ]
+                )
+
+            try:
+                driver.find_element(By.CSS_SELECTOR, "a.next-btn.au-target").click()
+                time.sleep(4)
+            except:
+                flag = False
+
+        updateDB(key, data)
+    except Exception as e:
+        print(key, "========", e)
+        if "ERR_CONNECTION_TIMED_OUT" in str(e):
+            eventHander(key, "CONNFAILED")
+        elif "no such element" in str(e):
+            eventHander(key, "UPDATED")
+        elif "ERR_NAME_NOT_RESOLVED" in str(e):
+            eventHander(key, "CONNFAILED")
+        else:
+            eventHander(key, "UNKNOWN")
+    finally:
+        driver.quit()
 
 
 if __name__ == "__main__":
