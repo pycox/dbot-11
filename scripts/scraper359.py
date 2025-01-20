@@ -1,16 +1,16 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from utils import updateDB, eventHander
 import time
+from bs4 import BeautifulSoup
 
 
 def main(key, com, url):
     options = Options()
-    
+
     options.add_argument("--log-level=3")
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
@@ -21,50 +21,73 @@ def main(key, com, url):
     )
 
     driver = webdriver.Chrome(options=options)
-    driver.get(url)
 
-    time.sleep(6)
+    try:
+        driver.get(url)
 
-    data = []
-    
-    driver.execute_script("arguments[0].scrollIntoView();", driver.find_element(By.CSS_SELECTOR, "#icims_content_iframe"))
-    iframe = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "icims_content_iframe")))
-    driver.switch_to.frame(iframe)
-    time.sleep(6)
-    
-    flag = True
-    while flag:
+        time.sleep(6)
 
-        
-        items = driver.find_elements(By.CSS_SELECTOR, ".iCIMS_JobsTable .row")
-        for item in items:
-            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-            location = item.find_element(By.CSS_SELECTOR, ".iCIMS_JobHeaderTag:nth-child(3) .iCIMS_JobHeaderData span").text.strip()
-            for str in locations:
-                if (str in location):
-                    data.append(
-                        [
-                            item.find_element(By.CSS_SELECTOR, "h3").text.strip(),
-                            com,
-                            location,
-                            link,
-                        ]
-                    )
-                    break
-        
-        try:
-            button = driver.find_element(By.CSS_SELECTOR, 'a:not(.invisible) span[title="Next page of results"')
-            driver.execute_script("arguments[0].scrollIntoView();", button)
-            driver.execute_script("arguments[0].click();", button)
-            time.sleep(4)
-        except:
-            flag = False
-            print("No More Jobs")
+        data = []
 
-            
+        driver.execute_script(
+            "arguments[0].scrollIntoView();",
+            driver.find_element(By.CSS_SELECTOR, "#icims_content_iframe"),
+        )
+        iframe = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, "icims_content_iframe"))
+        )
+        driver.switch_to.frame(iframe)
 
-    driver.quit()
-    updateDB(key, data)
+        time.sleep(6)
+
+        flag = True
+
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+
+        # driver.find_element(By.CSS_SELECTOR, ".iCIMS_JobsTable .row")
+
+        while flag:
+            items = soup.select(".iCIMS_JobsTable .row")
+
+            for item in items:
+                link = item.find("a").get("href").strip()
+                location = item.select_one(
+                    ".iCIMS_JobHeaderTag:nth-child(3) dd",
+                ).text.strip()
+
+                data.append(
+                    [
+                        item.find("h3").text.strip(),
+                        com,
+                        location,
+                        link,
+                    ]
+                )
+
+            try:
+                button = driver.find_element(
+                    By.CSS_SELECTOR,
+                    'a:not(.invisible) span[title="Next page of results"',
+                )
+                driver.execute_script("arguments[0].scrollIntoView();", button)
+                driver.execute_script("arguments[0].click();", button)
+                time.sleep(4)
+            except:
+                flag = False
+
+        updateDB(key, data)
+    except Exception as e:
+        print(key, "========", e)
+        if "ERR_CONNECTION_TIMED_OUT" in str(e):
+            eventHander(key, "CONNFAILED")
+        elif "no such element" in str(e):
+            eventHander(key, "UPDATED")
+        elif "ERR_NAME_NOT_RESOLVED" in str(e):
+            eventHander(key, "CONNFAILED")
+        else:
+            eventHander(key, "UNKNOWN")
+    finally:
+        driver.quit()
 
 
 if __name__ == "__main__":

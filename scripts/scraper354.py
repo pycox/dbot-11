@@ -10,7 +10,7 @@ import time
 
 def main(key, com, url):
     options = Options()
-    
+
     options.add_argument("--log-level=3")
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
@@ -21,43 +21,43 @@ def main(key, com, url):
     )
 
     driver = webdriver.Chrome(options=options)
-    driver.get(url)
-
-    time.sleep(6)
 
     try:
-        driver.find_element(By.CSS_SELECTOR, 'button#onetrust-accept-btn-handler').click()
-    except:
-        print("No Cookie Button")
+        driver.get("https://itesage.azurewebsites.net/")
 
-    driver.execute_script("arguments[0].scrollIntoView();", driver.find_element(By.CSS_SELECTOR, ".SectionTitlestyles__Container-sc-1xc0u7l-0.hWDLsZ"))
+        time.sleep(6)
 
-    time.sleep(4)
+        data = []
 
-    iframe = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".IframeHolderstyles__Iframe-sc-13m298x-2.gUYrqq")))
-    driver.switch_to.frame(iframe)
+        driver.find_element(By.CSS_SELECTOR, ".hpanel.filter-item")
+        items = driver.find_elements(By.CSS_SELECTOR, ".hpanel.filter-item")
 
-    data = []
-    
-    items = driver.find_elements(By.CSS_SELECTOR, ".hpanel.filter-item")
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, "p.small").text.strip()
-        for str in locations:
-            if (str in location):
-                data.append(
-                    [
-                        item.find_element(By.CSS_SELECTOR, "h5.m-b-xs").text.strip(),
-                        com,
-                        location,
-                        link,
-                    ]
-                )
-                break
+        for item in items:
+            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+            location = item.find_element(By.CSS_SELECTOR, "p.small").text.strip()
 
+            data.append(
+                [
+                    item.find_element(By.CSS_SELECTOR, "h5.m-b-xs").text.strip(),
+                    com,
+                    location,
+                    link,
+                ]
+            )
 
-    driver.quit()
-    updateDB(key, data)
+        updateDB(key, data)
+    except Exception as e:
+        print(key, "========", e)
+        if "ERR_CONNECTION_TIMED_OUT" in str(e):
+            eventHander(key, "CONNFAILED")
+        elif "no such element" in str(e):
+            eventHander(key, "UPDATED")
+        elif "ERR_NAME_NOT_RESOLVED" in str(e):
+            eventHander(key, "CONNFAILED")
+        else:
+            eventHander(key, "UNKNOWN")
+    finally:
+        driver.quit()
 
 
 if __name__ == "__main__":

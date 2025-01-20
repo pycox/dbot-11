@@ -1,14 +1,13 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import Select
 from utils import updateDB, eventHander
 import time
 
 
 def main(key, com, url):
     options = Options()
-    
+
     options.add_argument("--log-level=3")
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
@@ -19,40 +18,62 @@ def main(key, com, url):
     )
 
     driver = webdriver.Chrome(options=options)
-    driver.get(url)
 
-    time.sleep(4)
+    try:
+        driver.get(url)
 
-    data = []
-    
-    flag = True
-    while flag:
-        items = driver.find_elements(By.CSS_SELECTOR, ".col-xs-12.col-sm-6.col-md-3")
-        for item in items:
-            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-            data.append(
-                [
-                    item.find_element(By.CSS_SELECTOR, "strong").text.strip(),
-                    com,
-                    "UK",
-                    link,
-                ]
+        time.sleep(4)
+
+        data = []
+
+        flag = True
+
+        driver.find_element(By.CSS_SELECTOR, ".col-xs-12.col-sm-6.col-md-3")
+
+        while flag:
+            items = driver.find_elements(
+                By.CSS_SELECTOR, ".col-xs-12.col-sm-6.col-md-3"
             )
 
-        try:
-            next_button = driver.find_element(By.CSS_SELECTOR, 'li.next')
-            if "disabled" in next_button.get_attribute("class"):
+            for item in items:
+                link = (
+                    item.find_element(By.CSS_SELECTOR, "a")
+                    .get_attribute("href")
+                    .strip()
+                )
+
+                data.append(
+                    [
+                        item.find_element(By.CSS_SELECTOR, "strong").text.strip(),
+                        com,
+                        "UK",
+                        link,
+                    ]
+                )
+
+            try:
+                next_button = driver.find_element(By.CSS_SELECTOR, "li.next")
+                if "disabled" in next_button.get_attribute("class"):
+                    flag = False
+                else:
+                    next_button.click()
+                time.sleep(4)
+            except:
                 flag = False
-            else:
-                next_button.click()
-            time.sleep(4)
-        except:
-            flag = False
-            print("No More Jobs")
 
-
-    driver.quit()
-    updateDB(key, data)
+        updateDB(key, data)
+    except Exception as e:
+        print(key, "========", e)
+        if "ERR_CONNECTION_TIMED_OUT" in str(e):
+            eventHander(key, "CONNFAILED")
+        elif "no such element" in str(e):
+            eventHander(key, "UPDATED")
+        elif "ERR_NAME_NOT_RESOLVED" in str(e):
+            eventHander(key, "CONNFAILED")
+        else:
+            eventHander(key, "UNKNOWN")
+    finally:
+        driver.quit()
 
 
 if __name__ == "__main__":

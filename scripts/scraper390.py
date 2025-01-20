@@ -1,14 +1,13 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import Select
 from utils import updateDB, eventHander
 import time
 
 
 def main(key, com, url):
     options = Options()
-    
+
     options.add_argument("--log-level=3")
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
@@ -19,26 +18,41 @@ def main(key, com, url):
     )
 
     driver = webdriver.Chrome(options=options)
-    driver.get(url)
-
-    time.sleep(4)
 
     try:
-        driver.find_element(By.CSS_SELECTOR, '.gdprcookie-rejectbutton').click()
-    except:
-        print("No Cookie Button")
+        driver.get(url)
 
-    time.sleep(4)
+        time.sleep(4)
 
-    data = []
+        try:
+            driver.find_element(By.CSS_SELECTOR, ".gdprcookie-rejectbutton").click()
+        except Exception as e:
+            print(f"{key} ==== cookiee button ====: {e}")
+            eventHander(key, "ELEMENT")
 
-    flag = True
-    while flag:
-        items = driver.find_elements(By.CSS_SELECTOR, ".ListGridContainer .rowContainerHolder")
-        for item in items:
-            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-            location = item.find_element(By.CSS_SELECTOR, ".codelist5value_vacancyColumn").text.strip()
-            if location in locations:
+        time.sleep(4)
+
+        data = []
+
+        flag = True
+
+        driver.find_element(By.CSS_SELECTOR, ".ListGridContainer .rowContainerHolder")
+
+        while flag:
+            items = driver.find_elements(
+                By.CSS_SELECTOR, ".ListGridContainer .rowContainerHolder"
+            )
+
+            for item in items:
+                link = (
+                    item.find_element(By.CSS_SELECTOR, "a")
+                    .get_attribute("href")
+                    .strip()
+                )
+                location = item.find_element(
+                    By.CSS_SELECTOR, ".codelist5value_vacancyColumn"
+                ).text.strip()
+
                 data.append(
                     [
                         item.find_element(By.CSS_SELECTOR, "a").text.strip(),
@@ -48,21 +62,33 @@ def main(key, com, url):
                     ]
                 )
 
-        try:
-            next_button = driver.find_element(By.CSS_SELECTOR, '.pagingButtons a.scroller_movenext')
-            driver.execute_script("arguments[0].scrollIntoView();", next_button)
-            if next_button.get_attribute("disabled") == "disabled":
+            try:
+                next_button = driver.find_element(
+                    By.CSS_SELECTOR, ".pagingButtons a.scroller_movenext"
+                )
+                driver.execute_script("arguments[0].scrollIntoView();", next_button)
+                if next_button.get_attribute("disabled") == "disabled":
+                    flag = False
+                else:
+                    next_button.click()
+
+                time.sleep(4)
+            except:
                 flag = False
-            else:
-                next_button.click()
 
-            time.sleep(4)
-        except:
-            flag = False
-            print("No More Jobs")
-
-    driver.quit()
-    updateDB(key, data)
+        updateDB(key, data)
+    except Exception as e:
+        print(key, "========", e)
+        if "ERR_CONNECTION_TIMED_OUT" in str(e):
+            eventHander(key, "CONNFAILED")
+        elif "no such element" in str(e):
+            eventHander(key, "UPDATED")
+        elif "ERR_NAME_NOT_RESOLVED" in str(e):
+            eventHander(key, "CONNFAILED")
+        else:
+            eventHander(key, "UNKNOWN")
+    finally:
+        driver.quit()
 
 
 if __name__ == "__main__":
