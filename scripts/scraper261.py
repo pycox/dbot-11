@@ -7,7 +7,7 @@ import time
 
 def main(key, com, url):
     options = Options()
-    
+
     options.add_argument("--log-level=3")
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
@@ -18,26 +18,36 @@ def main(key, com, url):
     )
 
     driver = webdriver.Chrome(options=options)
-    driver.get(url)
-
-    data = []
-    flag = True
 
     try:
-        driver.find_element(By.CSS_SELECTOR, "button#onetrust-reject-all-handler").click()
-    except:
-        print("No Cookie button")
+        driver.get(url)
 
-    if "UK" in locations:
+        data = []
+        flag = True
+
+        try:
+            driver.find_element(
+                By.CSS_SELECTOR, "button#onetrust-reject-all-handler"
+            ).click()
+        except Exception as e:
+            print(f"{key} ==== cookiee button ====: {e}")
+            eventHander(key, "ELEMENT")
+
         while flag:
             time.sleep(4)
             items = driver.find_elements(By.CSS_SELECTOR, "ul > li.c-job-listing-card")
 
             for item in items:
-                link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+                link = (
+                    item.find_element(By.CSS_SELECTOR, "a")
+                    .get_attribute("href")
+                    .strip()
+                )
                 data.append(
                     [
-                        item.find_element(By.CSS_SELECTOR, "p.c-job-listing-card__header").text.strip(),
+                        item.find_element(
+                            By.CSS_SELECTOR, "p.c-job-listing-card__header"
+                        ).text.strip(),
                         com,
                         "UK",
                         link,
@@ -45,14 +55,25 @@ def main(key, com, url):
                 )
 
             try:
-                driver.find_element(By.CSS_SELECTOR, "a.c-job-listing-left__right-arrow").click()
+                driver.find_element(
+                    By.CSS_SELECTOR, "a.c-job-listing-left__right-arrow"
+                ).click()
             except:
                 flag = False
-                print("No more Jobs")
 
-    driver.quit()
-
-    updateDB(key, data)
+        updateDB(key, data)
+    except Exception as e:
+        print(key, "========", e)
+        if "ERR_CONNECTION_TIMED_OUT" in str(e):
+            eventHander(key, "CONNFAILED")
+        elif "no such element" in str(e):
+            eventHander(key, "UPDATED")
+        elif "ERR_NAME_NOT_RESOLVED" in str(e):
+            eventHander(key, "CONNFAILED")
+        else:
+            eventHander(key, "UNKNOWN")
+    finally:
+        driver.quit()
 
 
 if __name__ == "__main__":

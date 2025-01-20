@@ -7,7 +7,7 @@ import time
 
 def main(key, com, url):
     options = Options()
-    
+
     options.add_argument("--log-level=3")
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
@@ -18,41 +18,56 @@ def main(key, com, url):
     )
 
     driver = webdriver.Chrome(options=options)
-    driver.get(url)
 
-    time.sleep(4)
+    try:
+        driver.get(url)
 
-    data = []
-    regions = []
-    
-    if "UK" in locations:
-        regions.extend(['London', 'United Kingdom', 'UK'])
+        time.sleep(4)
 
-    if "US" in locations:
-        regions.extend(['New York', 'San Francisco', 'United States', 'USA', 'US'])
+        data = []
+        regions = []
 
+        regions.extend(["London", "United Kingdom", "UK"])
 
-    countries = driver.find_elements(By.CSS_SELECTOR, "div.positions--country")
-    for country in countries:
-        country_name = country.find_element(By.CSS_SELECTOR, "h2").text.strip()
-        if country_name in regions:
+        regions.extend(["New York", "San Francisco", "United States", "USA", "US"])
 
-            items = country.find_elements(By.CSS_SELECTOR, "div.positions-items > div.positions--card")
-            for item in items:
-                link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-
-                data.append(
-                    [
-                        item.find_element(By.CSS_SELECTOR, "a").text.strip(),
-                        com,
-                        country_name,
-                        link,
-                    ]
+        countries = driver.find_elements(By.CSS_SELECTOR, "div.positions--country")
+        
+        for country in countries:
+            country_name = country.find_element(By.CSS_SELECTOR, "h2").text.strip()
+            if country_name in regions:
+                items = country.find_elements(
+                    By.CSS_SELECTOR, "div.positions-items > div.positions--card"
                 )
+                for item in items:
+                    link = (
+                        item.find_element(By.CSS_SELECTOR, "a")
+                        .get_attribute("href")
+                        .strip()
+                    )
 
-    driver.quit()
+                    data.append(
+                        [
+                            item.find_element(By.CSS_SELECTOR, "a").text.strip(),
+                            com,
+                            country_name,
+                            link,
+                        ]
+                    )
 
-    updateDB(key, data)
+        updateDB(key, data)
+    except Exception as e:
+        print(key, "========", e)
+        if "ERR_CONNECTION_TIMED_OUT" in str(e):
+            eventHander(key, "CONNFAILED")
+        elif "no such element" in str(e):
+            eventHander(key, "UPDATED")
+        elif "ERR_NAME_NOT_RESOLVED" in str(e):
+            eventHander(key, "CONNFAILED")
+        else:
+            eventHander(key, "UNKNOWN")
+    finally:
+        driver.quit()
 
 
 if __name__ == "__main__":

@@ -7,7 +7,7 @@ import time
 
 def main(key, com, url):
     options = Options()
-    
+
     options.add_argument("--log-level=3")
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
@@ -18,20 +18,27 @@ def main(key, com, url):
     )
 
     driver = webdriver.Chrome(options=options)
-    driver.get(url)
 
-    time.sleep(4)
+    try:
+        driver.get(url)
 
+        time.sleep(4)
 
-    data = []
+        data = []
 
-
-    if "UK" in locations:
         flag = True
+
         while flag:
-            items = driver.find_elements(By.CSS_SELECTOR, "table#searchresults > tbody > tr")
+            items = driver.find_elements(
+                By.CSS_SELECTOR, "table#searchresults > tbody > tr"
+            )
+            
             for item in items:
-                link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+                link = (
+                    item.find_element(By.CSS_SELECTOR, "a")
+                    .get_attribute("href")
+                    .strip()
+                )
                 data.append(
                     [
                         item.find_element(By.CSS_SELECTOR, "a").text.strip(),
@@ -40,20 +47,36 @@ def main(key, com, url):
                         link,
                     ]
                 )
-                
+
             try:
-                curr_button = int(driver.find_element(By.CSS_SELECTOR, '.pagination li.active a').text.strip())
-                next_button = driver.find_element(By.CSS_SELECTOR, f'.pagination li a[title="Page {curr_button+1}"]')
+                curr_button = int(
+                    driver.find_element(
+                        By.CSS_SELECTOR, ".pagination li.active a"
+                    ).text.strip()
+                )
+                next_button = driver.find_element(
+                    By.CSS_SELECTOR,
+                    f'.pagination li a[title="Page {curr_button+1}"]',
+                )
                 driver.execute_script("arguments[0].scrollIntoView();", next_button)
                 driver.execute_script("arguments[0].click();", next_button)
                 time.sleep(4)
             except Exception:
                 flag = False
-                print("No More Jobs")
 
-    driver.quit()
-
-    updateDB(key, data)
+        updateDB(key, data)
+    except Exception as e:
+        print(key, "========", e)
+        if "ERR_CONNECTION_TIMED_OUT" in str(e):
+            eventHander(key, "CONNFAILED")
+        elif "no such element" in str(e):
+            eventHander(key, "UPDATED")
+        elif "ERR_NAME_NOT_RESOLVED" in str(e):
+            eventHander(key, "CONNFAILED")
+        else:
+            eventHander(key, "UNKNOWN")
+    finally:
+        driver.quit()
 
 
 if __name__ == "__main__":

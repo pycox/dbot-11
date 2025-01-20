@@ -7,7 +7,7 @@ import time
 
 def main(key, com, url):
     options = Options()
-    
+
     options.add_argument("--log-level=3")
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
@@ -18,37 +18,58 @@ def main(key, com, url):
     )
 
     driver = webdriver.Chrome(options=options)
-    driver.get(url)
 
-    data = []
-    flag = True
+    try:
+        driver.get(url)
 
-    while flag:
-        time.sleep(4)
-        try:
-            driver.find_element(By.CSS_SELECTOR, "div.d-flex.mt-4.ng-star-inserted > button").click()
-        except Exception:
-            flag = False
+        data = []
+        flag = True
 
-    items = driver.find_elements(By.CSS_SELECTOR, ".row.job-item.ng-star-inserted")
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, ".btn.btn-outline-primary").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, '.text-muted.font-weight-bold').text.strip()
+        while flag:
+            time.sleep(4)
+            try:
+                driver.find_element(
+                    By.CSS_SELECTOR, "div.d-flex.mt-4.ng-star-inserted > button"
+                ).click()
+            except Exception:
+                flag = False
 
-        for str in locations:
-            if (str in location):
-                data.append(
-                    [
-                        item.find_element(By.CSS_SELECTOR, "h5").text.strip(),
-                        com,
-                        location,
-                        link,
-                    ]
-                )
-                break
+        driver.find_element(By.CSS_SELECTOR, ".row.job-item.ng-star-inserted")
+        items = driver.find_elements(By.CSS_SELECTOR, ".row.job-item.ng-star-inserted")
 
-    driver.quit()
-    updateDB(key, data)
+        for item in items:
+            link = (
+                item.find_element(By.CSS_SELECTOR, ".btn.btn-outline-primary")
+                .get_attribute("href")
+                .strip()
+            )
+            location = item.find_element(
+                By.CSS_SELECTOR, ".text-muted.font-weight-bold"
+            ).text.strip()
+
+            data.append(
+                [
+                    item.find_element(By.CSS_SELECTOR, "h5").text.strip(),
+                    com,
+                    location,
+                    link,
+                ]
+            )
+
+        updateDB(key, data)
+    except Exception as e:
+        print(key, "========", e)
+        if "ERR_CONNECTION_TIMED_OUT" in str(e):
+            eventHander(key, "CONNFAILED")
+        elif "no such element" in str(e):
+            eventHander(key, "UPDATED")
+        elif "ERR_NAME_NOT_RESOLVED" in str(e):
+            eventHander(key, "CONNFAILED")
+        else:
+            eventHander(key, "UNKNOWN")
+    finally:
+        driver.quit()
+
 
 if __name__ == "__main__":
     main()

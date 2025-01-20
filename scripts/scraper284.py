@@ -7,7 +7,7 @@ import time
 
 def main(key, com, url):
     options = Options()
-    
+
     options.add_argument("--log-level=3")
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
@@ -18,40 +18,55 @@ def main(key, com, url):
     )
 
     driver = webdriver.Chrome(options=options)
-    driver.get(url)
-
-    time.sleep(4)
 
     try:
-      driver.find_element(By.CSS_SELECTOR, "button#didomi-notice-disagree-button").click()
-    except:
-      print("No Cookie Button")
+        driver.get(url)
 
-    time.sleep(4)
+        time.sleep(4)
 
-    items = driver.find_elements(By.CSS_SELECTOR, "div.ts-offer-card")
+        try:
+            driver.find_element(
+                By.CSS_SELECTOR, "button#didomi-notice-disagree-button"
+            ).click()
+        except Exception as e:
+            print(f"{key} ==== cookiee button ====: {e}")
+            eventHander(key, "ELEMENT")
 
-    data = []
+        time.sleep(4)
 
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
-        location = item.find_element(By.CSS_SELECTOR, 'ul.ts-offer-card-content__list > li:nth-child(3)').text.strip()
+        driver.find_element(By.CSS_SELECTOR, "div.ts-offer-card")
+        items = driver.find_elements(By.CSS_SELECTOR, "div.ts-offer-card")
 
-        for str in locations:
-            if (str in location):
-                data.append(
-                    [
-                        item.find_element(By.CSS_SELECTOR, "a").text.strip(),
-                        com,
-                        location,
-                        link,
-                    ]
-                )
-                break
+        data = []
 
-    driver.quit()
+        for item in items:
+            link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+            location = item.find_element(
+                By.CSS_SELECTOR, "ul.ts-offer-card-content__list > li:nth-child(3)"
+            ).text.strip()
 
-    updateDB(key, data)
+            data.append(
+                [
+                    item.find_element(By.CSS_SELECTOR, "a").text.strip(),
+                    com,
+                    location,
+                    link,
+                ]
+            )
+
+        updateDB(key, data)
+    except Exception as e:
+        print(key, "========", e)
+        if "ERR_CONNECTION_TIMED_OUT" in str(e):
+            eventHander(key, "CONNFAILED")
+        elif "no such element" in str(e):
+            eventHander(key, "UPDATED")
+        elif "ERR_NAME_NOT_RESOLVED" in str(e):
+            eventHander(key, "CONNFAILED")
+        else:
+            eventHander(key, "UNKNOWN")
+    finally:
+        driver.quit()
 
 
 if __name__ == "__main__":
