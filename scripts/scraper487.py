@@ -1,17 +1,13 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import Select
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from utils import updateDB, eventHander
 import time
 
 
 def main(key, com, url):
     options = Options()
-    
+
     options.add_argument("--log-level=3")
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
@@ -22,47 +18,61 @@ def main(key, com, url):
     )
 
     driver = webdriver.Chrome(options=options)
-    driver.get(url)
 
-    time.sleep(4)
-    
     try:
-        driver.find_element(By.CSS_SELECTOR, '._brlbs-refuse-btn').click()
-    except:
-        print("No Cookie Button")
+        driver.get(url)
 
-    time.sleep(4)
-
-    data = []
-    
-
-    if "UK" in locations:
-        
-        iframe = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "iframe")))
-        driver.switch_to.frame(iframe)
-
-        search_field = driver.find_element(By.CSS_SELECTOR, "input#geoLocation_search")
-        driver.execute_script("arguments[0].scrollIntoView();", search_field)
-        time.sleep(2)
-        search_field.send_keys("UK")
-        search_field.send_keys(Keys.ENTER)
         time.sleep(4)
-        
-        items = driver.find_elements(By.CSS_SELECTOR, ".outputContainer .matchElement:not([style*='display: none'])")
+
+        try:
+            driver.find_element(By.CSS_SELECTOR, "._brlbs-refuse-btn").click()
+        except Exception as e:
+            print(f"{key} ==== cookiee button ====: {e}")
+            eventHander(key, "ELEMENT")
+
+        time.sleep(4)
+
+        data = []
+
+        driver.find_element(
+            By.CSS_SELECTOR,
+            ".outputContainer .matchElement:not([style*='display: none'])",
+        )
+        items = driver.find_elements(
+            By.CSS_SELECTOR,
+            ".outputContainer .matchElement:not([style*='display: none'])",
+        )
+
         for item in items:
             link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
+
             data.append(
                 [
-                    driver.execute_script("return arguments[0].innerText;", item.find_element(By.CSS_SELECTOR, "a")).strip(),
+                    driver.execute_script(
+                        "return arguments[0].innerText;",
+                        item.find_element(By.CSS_SELECTOR, "a"),
+                    ).strip(),
                     com,
-                    "UK",
+                    item.find_element(
+                        By.CSS_SELECTOR, "span.location-view-item"
+                    ).text.strip(),
                     link,
                 ]
             )
 
-
-    driver.quit()
-    updateDB(key, data)
+        updateDB(key, data)
+    except Exception as e:
+        print(key, "========", e)
+        if "ERR_CONNECTION_TIMED_OUT" in str(e):
+            eventHander(key, "CONNFAILED")
+        elif "no such element" in str(e):
+            eventHander(key, "UPDATED")
+        elif "ERR_NAME_NOT_RESOLVED" in str(e):
+            eventHander(key, "CONNFAILED")
+        else:
+            eventHander(key, "UNKNOWN")
+    finally:
+        driver.quit()
 
 
 if __name__ == "__main__":

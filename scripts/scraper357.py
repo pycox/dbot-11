@@ -32,16 +32,23 @@ def main(key, com, url):
 
         time.sleep(4)
 
-        data = []
+        countDom = driver.find_elements(
+            By.CSS_SELECTOR, "li.attrax-pagination__page-item"
+        )
 
-        flag = True
+        count = countDom[-1].find_element(By.CSS_SELECTOR, "a").text.strip()
+
+        num = int(count)
+
+        data = []
 
         driver.find_element(
             By.CSS_SELECTOR,
             ".attrax-list-widget__list--has-items .attrax-vacancy-tile",
         )
 
-        while flag:
+        while num >= 1:
+
             items = driver.find_elements(
                 By.CSS_SELECTOR,
                 ".attrax-list-widget__list--has-items .attrax-vacancy-tile",
@@ -63,18 +70,10 @@ def main(key, com, url):
                     ]
                 )
 
-            try:
-                button = driver.find_elements(
-                    By.CSS_SELECTOR, "li.attrax-pagination__next a"
-                )[1]
+            num -= 1
 
-                driver.execute_script("arguments[0].scrollIntoView();", button)
-
-                driver.execute_script("arguments[0].click();", button)
-
-                time.sleep(4)
-            except:
-                flag = False
+            if num >= 1:
+                driver.get(f"{url}?page={num}")
 
         updateDB(key, data)
     except Exception as e:

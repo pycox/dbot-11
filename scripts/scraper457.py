@@ -1,14 +1,13 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import Select
 from utils import updateDB, eventHander
 import time
 
 
 def main(key, com, url):
     options = Options()
-    
+
     options.add_argument("--log-level=3")
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
@@ -19,33 +18,54 @@ def main(key, com, url):
     )
 
     driver = webdriver.Chrome(options=options)
-    driver.get(url)
-
-    time.sleep(4)
 
     try:
-        driver.find_element(By.CSS_SELECTOR, 'button[data-action="click->common--cookies--alert#disableAll"]').click()
-    except:
-        print("No Cookie Button")
-    
-    time.sleep(2)
-    data = []
-    
-    if "UK" in locations:
+        driver.get(url)
+
+        time.sleep(4)
+
+        try:
+            driver.find_element(
+                By.CSS_SELECTOR,
+                'button[data-action="click->common--cookies--alert#disableAll"]',
+            ).click()
+        except Exception as e:
+            print(f"{key} ==== cookiee button ====: {e}")
+            eventHander(key, "ELEMENT")
+
+        time.sleep(2)
+        data = []
+
+        driver.find_element(By.CSS_SELECTOR, "#jobs_list_container li a")
         items = driver.find_elements(By.CSS_SELECTOR, "#jobs_list_container li a")
+
         for item in items:
             link = item.get_attribute("href").strip()
+            
             data.append(
                 [
-                    item.find_element(By.CSS_SELECTOR, "span.company-link-style").text.strip(),
+                    item.find_element(
+                        By.CSS_SELECTOR, "span.company-link-style"
+                    ).text.strip(),
                     com,
                     "UK",
                     link,
                 ]
             )
 
-    driver.quit()
-    updateDB(key, data)
+        updateDB(key, data)
+    except Exception as e:
+        print(key, "========", e)
+        if "ERR_CONNECTION_TIMED_OUT" in str(e):
+            eventHander(key, "CONNFAILED")
+        elif "no such element" in str(e):
+            eventHander(key, "UPDATED")
+        elif "ERR_NAME_NOT_RESOLVED" in str(e):
+            eventHander(key, "CONNFAILED")
+        else:
+            eventHander(key, "UNKNOWN")
+    finally:
+        driver.quit()
 
 
 if __name__ == "__main__":

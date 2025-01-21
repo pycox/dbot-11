@@ -7,7 +7,7 @@ import time
 
 def main(key, com, url):
     options = Options()
-    
+
     options.add_argument("--log-level=3")
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
@@ -18,38 +18,53 @@ def main(key, com, url):
     )
 
     driver = webdriver.Chrome(options=options)
-    driver.get(url)
 
-    time.sleep(4)
-    
     try:
-        driver.find_element(By.CSS_SELECTOR, 'button[data-action="click->common--cookies--alert#disableAll"]').click()
-    except:
-        print("No Cookie Button")
-    time.sleep(3)
+        driver.get(url)
 
-    flag = True
-    while flag:
-      try:
-        driver.find_element(By.CSS_SELECTOR, 'a#show_more_button').click()
         time.sleep(4)
-      except:
-        flag = False
-        print("No more Jobs")
 
-    items = driver.find_elements(By.CSS_SELECTOR, "ul#jobs_list_container > li")
-
-    data = []
-
-    for item in items:
-        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href").strip()
         try:
-          location = item.find_element(By.CSS_SELECTOR, 'div > span:nth-child(3)').text.strip()
-        except:
-          location = item.find_element(By.CSS_SELECTOR, 'div > span').text.strip()
+            driver.find_element(
+                By.CSS_SELECTOR,
+                'button[data-action="click->common--cookies--alert#disableAll"]',
+            ).click()
+        except Exception as e:
+            print(f"{key} ==== cookiee button ====: {e}")
+            eventHander(key, "ELEMENT")
 
-        for str in locations:
-            if (str in location):
+        time.sleep(3)
+
+        flag = True
+
+        driver.find_element(By.CSS_SELECTOR, "ul#jobs_list_container > li")
+
+        while flag:
+            try:
+                driver.find_element(By.CSS_SELECTOR, "a#show_more_button").click()
+                time.sleep(4)
+            except:
+                flag = False
+
+            items = driver.find_elements(By.CSS_SELECTOR, "ul#jobs_list_container > li")
+
+            data = []
+
+            for item in items:
+                link = (
+                    item.find_element(By.CSS_SELECTOR, "a")
+                    .get_attribute("href")
+                    .strip()
+                )
+                try:
+                    location = item.find_element(
+                        By.CSS_SELECTOR, "div > span:nth-child(3)"
+                    ).text.strip()
+                except:
+                    location = item.find_element(
+                        By.CSS_SELECTOR, "div > span"
+                    ).text.strip()
+
                 data.append(
                     [
                         item.find_element(By.CSS_SELECTOR, "span").text.strip(),
@@ -58,11 +73,20 @@ def main(key, com, url):
                         link,
                     ]
                 )
-                break
 
-    driver.quit()
-
-    updateDB(key, data)
+        updateDB(key, data)
+    except Exception as e:
+        print(key, "========", e)
+        if "ERR_CONNECTION_TIMED_OUT" in str(e):
+            eventHander(key, "CONNFAILED")
+        elif "no such element" in str(e):
+            eventHander(key, "UPDATED")
+        elif "ERR_NAME_NOT_RESOLVED" in str(e):
+            eventHander(key, "CONNFAILED")
+        else:
+            eventHander(key, "UNKNOWN")
+    finally:
+        driver.quit()
 
 
 if __name__ == "__main__":

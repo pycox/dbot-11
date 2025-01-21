@@ -7,7 +7,7 @@ import time
 
 def main(key, com, url):
     options = Options()
-    
+
     options.add_argument("--log-level=3")
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
@@ -18,22 +18,29 @@ def main(key, com, url):
     )
 
     driver = webdriver.Chrome(options=options)
-    driver.get(url)
 
-    time.sleep(4)
-    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-    time.sleep(4)
+    try:
+        driver.get(url)
 
-    data = []
+        time.sleep(4)
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        time.sleep(4)
 
-    if "UK" in locations:
+        data = []
+
+        driver.find_element(By.CSS_SELECTOR, ".grid-job-holder a")
         items = driver.find_elements(By.CSS_SELECTOR, ".grid-job-holder a")
+
         for item in items:
             try:
-                title = item.find_element(By.CSS_SELECTOR, '.grid-job .title h4').text.strip()
+                title = item.find_element(
+                    By.CSS_SELECTOR, ".grid-job .title h4"
+                ).text.strip()
             except:
                 continue
+
             link = item.get_attribute("href").strip()
+
             data.append(
                 [
                     title,
@@ -43,9 +50,19 @@ def main(key, com, url):
                 ]
             )
 
-    driver.quit()
-
-    updateDB(key, data)
+        updateDB(key, data)
+    except Exception as e:
+        print(key, "========", e)
+        if "ERR_CONNECTION_TIMED_OUT" in str(e):
+            eventHander(key, "CONNFAILED")
+        elif "no such element" in str(e):
+            eventHander(key, "UPDATED")
+        elif "ERR_NAME_NOT_RESOLVED" in str(e):
+            eventHander(key, "CONNFAILED")
+        else:
+            eventHander(key, "UNKNOWN")
+    finally:
+        driver.quit()
 
 
 if __name__ == "__main__":
