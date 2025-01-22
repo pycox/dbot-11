@@ -1,14 +1,21 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import importlib
-from utils import filterUrls, getBotSpeed
+import os
+from utils import filterUrls
 
-num_threads = getBotSpeed()
+from dotenv import load_dotenv
+
+load_dotenv()
+
+num_threads = int(os.getenv("SPEED") or 10)
 
 
 def scraping(id, name, url):
     try:
         print(f"======== {int(id / 600 * 10000) / 100.0}% ========")
+
         scrapper = importlib.import_module(f"scripts.scraper{id}")
+
         scrapper.main(id, name, url)
     except Exception as e:
         print(f"{name}: {e}")

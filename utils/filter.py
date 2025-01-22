@@ -1,142 +1,24 @@
-import json
-from openpyxl import load_workbook, Workbook
+from openpyxl import load_workbook
 import os
 from pymongo import MongoClient
 from datetime import datetime
+from dotenv import load_dotenv
+from openpyxl import load_workbook, Workbook
 
-client = MongoClient("mongodb://localhost:27017/")
+load_dotenv()
+
+db_uri = os.getenv("DB_URI")
+
+client = MongoClient(db_uri)
 db = client["dbot"]
 collection = db["leads"]
 
-histDir = r"history.json"
-
 ctrXlDir = r"clients.xlsx"
-
-dbXlDir = r"data.xlsx"
-
-cashData = {}
+logDir = rf"logs/{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.xlsx"
 
 rowData = []
 
-
-def ensure_history_file_exists():
-    if not os.path.exists(histDir):
-        with open(histDir, "w") as file:
-            json.dump({}, file)
-
-
-def getBotSpeed():
-    try:
-        wb = load_workbook(ctrXlDir)
-        ws = wb.active
-        speed = ws["F2"].value
-
-        if isinstance(speed, (int, float)):
-            return int(speed)
-        else:
-            return 4
-    except FileNotFoundError:
-        return 4
-    except ValueError:
-        return 4
-
-
-def getLocations(location=None):
-    location_data = {
-        "UK": (
-            "UK",
-            "UNITED KINGDOM",
-            "ENG",
-            "GB",
-            "United Kingdom",
-            "London",
-            "LONDON",
-            "Bristol",
-            "BRISTOL",
-            "Tamworth",
-            "TAMWORTH",
-            "Brighton",
-            "BRIGHTON",
-            "England",
-            "ENGLAND",
-            "Birmingham",
-            "BIRMINGHAM",
-            "Cambridge",
-            "CAMBRIDGE",
-            "Manchester",
-            "MANCHESTER",
-            "Scotland",
-            "SCOTLAND",
-            "Leeds",
-            "LEEDS",
-            "Belfast",
-            "Liverpool",
-            "Newcastle",
-            "Warrington",
-            "Mayfair",
-            "Cambridge",
-            "Reading",
-            "Salford",
-            "Twickenham",
-            "Wembley",
-            "Southampton",
-            "Borough",
-            "BOROUGH",
-        ),
-        "US": (
-            "US",
-            "U.S.",
-            "USA",
-            "UNITED STATES",
-            "United States",
-            "New York",
-            "NEW YORK",
-            "Boston",
-            "BOSTON",
-            "San Francisco",
-            "SAN FRANCISCO",
-            "Washington",
-            "WASHINGTON",
-            "Philadelphia",
-            "PHILADELPHIA",
-            "Stamford",
-            "STAMFORD",
-            "Houston",
-            "HOUSTON",
-            "Los Angeles",
-            "LOS ANGELES",
-            "Chicago",
-            "CHICAGO",
-            "San Diego",
-            "SAN DIEGO",
-            "Denver",
-            "DENVER",
-            "Salt Lake City",
-            "SALT LAKE CITY",
-            "Miami",
-            "MIAMI",
-            "Tampa",
-            "TAMPA",
-            "Orlando",
-            "ORLANDO",
-            "California",
-            "Radnor",
-            "Dallas",
-            "DALLAS",
-            "Denver",
-            "DENVER",
-            "Kansas City",
-            "KANSAS CITY",
-            "Norman",
-            "NORMAN",
-            "Portland",
-            "PORTLAND",
-        ),
-    }
-
-    if location:
-        location = location.strip()
-    return location_data.get(location, location_data["UK"] + location_data["US"])
+os.makedirs(os.path.dirname(logDir), exist_ok=True)
 
 
 def filterUrls():
@@ -174,42 +56,44 @@ def readUrl(key):
             return [row[1].value, row[2].value]
 
 
-def fetchJobs():
-    wb = load_workbook(ctrXlDir)
+def eventHander(key, tp):
+    if os.path.exists(logDir):
+        wb = load_workbook(logDir)
+    else:
+        wb = Workbook()
 
-    ws = wb.active
+    if wb.active:
+        ws = wb.active
+    else:
+        ws = wb.create_sheet()
 
-    return [cell.value.lower() for cell in ws["E"] if cell.value is not None]
+    if ws["A1"] != "ID":
+        ws["A1"] = "ID"
+        ws["B1"] = "Company"
+        ws["C1"] = "URL"
+        ws["D1"] = "Log"
 
+    company, url = readUrl(key)
 
-def readHistory(key=None):
-    ensure_history_file_exists()
+    ws.append([key, company, url, tp])
 
-    with open(histDir, "r") as file:
-        try:
-            data = json.load(file)
-
-            if key is not None:
-                return data.get(f"{key}", [])
-
-            return data
-        except:
-            return []
+    wb.save(logDir)
 
 
 def updateDB(key, arr):
-    print(
-        "########",
-        f".{key}.",
-        f"[{len(arr)}]",
-        arr,
-        "########",
-        f".{key}.",
-        f"[{len(arr)}]",
-    )
+    # print(
+    #     "########",
+    #     f".{key}.",
+    #     f"[{len(arr)}]",
+    #     arr,
+    #     "########",
+    #     f".{key}.",
+    #     f"[{len(arr)}]",
+    # )
 
-    global rowData
-    global cashData
+    if len(arr) == 0:
+        eventHander(key, "EMPTY")
+        return
 
     for item in arr:
         title, company, location, link = item
@@ -228,10 +112,3 @@ def updateDB(key, arr):
             },
             upsert=True,
         )
-
-
-def eventHander(key, tp):
-    print("@@@@@@@@", key, tp)
-
-
-# client.close()
