@@ -151,3 +151,4 @@ clients.xlsx
 *history.json
 *test.py
 ~$*
+/logs

@@ -28,10 +28,12 @@ def filterUrls():
 
     urls = []
 
-    if ws["D1"].value != "yes":
-        return urls
+    total = 0
 
-    for row in ws.iter_rows(min_row=2, max_row=601):
+    if ws["D1"].value != "yes":
+        return urls, total
+
+    for row in ws.iter_rows(min_row=2):
         # for row in ws.iter_rows(min_row=1):
 
         if row[0].value == "ID" or row[0].value is None:
@@ -40,7 +42,9 @@ def filterUrls():
         if row[3].value == "yes":
             urls.append((row[0].value, row[1].value, row[2].value))
 
-    return urls
+        total = row[0].value
+
+    return urls, total
 
 
 def readUrl(key):
